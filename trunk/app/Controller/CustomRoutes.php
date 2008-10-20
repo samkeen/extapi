@@ -12,8 +12,6 @@ class Controller_CustomRoutes extends Controller_Base {
 	protected function about_action() {
 		$this->payload->message = "How SMS was added to Trimet TransitTracker";
 	}
-	
-	
 }
 
 ?>

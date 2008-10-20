@@ -46,7 +46,8 @@ final class ENV {
 		global $PATH__APP_ROOT, $logger;
 		$controller_classname = null;
 		$requested_controller_name = self::classifyName($requested_controller_name);
-		if(file_exists($PATH__APP_ROOT.'/'.CONSTS::CONTROLLER_DIR.'/'.$requested_controller_name.'.php')) {
+		$requested_controller_file = self::determine_app_or_framework_for_file(CONSTS::CONTROLLER_DIR.'/'.$requested_controller_name.'.php');
+		if($requested_controller_file!==null) {
 			$controller_classname = "Controller_".$requested_controller_name;
 		} else {
 			$logger->warn(__METHOD__.'  controller file requested ['.$PATH__APP_ROOT

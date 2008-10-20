@@ -11,8 +11,12 @@ abstract class Controller_Base {
 	protected $router;
 	protected $requested_action = null;
 	
+	// these are ment to be overridden in Controllers
+	protected $use_template = true;
+	protected $use_layout = true;
 	protected $template_file = null;
 	protected $layout_file = null;
+	
 	
 	protected $payload;
 	protected $rendered_template;
@@ -35,7 +39,7 @@ abstract class Controller_Base {
 		$this->payload = new SimpleDTO();
 		
 //		$this->logger->debug(print_r($this,1));
-		
+		$this->init();
 	}
 	/**
 	 * file not found internal action
@@ -45,49 +49,59 @@ abstract class Controller_Base {
 		$this->payload->message = "You've requested an unknown resource";
 	}
 	
-	
 	/**
 	 * main driver method for a controller
+	 * 
+	 * - first determine the action
+	 * - call the action: this allows the controller to override things
+	 *   like layouts and templates. 
 	 */
 	public function process($override_template = null, $override_action = null) {
 		$this->logger->debug(__METHOD__.' Calling process');
 		if ($override_action===null) {
 			$this->determine_requested_action();
 		}
-		if ($override_template===null) {
+		// call the action
+		$this->call_action($override_action);
+		
+		
+		if ($override_template===null && $this->use_template) {
 			$this->set_template_for_action();
 		} else {
 			$this->template_file = $override_template;
 		}
-		if (! file_exists($this->template_file)) {
+		
+		
+		if ($this->use_template && ! file_exists($this->template_file)) {
 			$this->logger->notice(__METHOD__.' requested template file not found ['.$this->template_file.'], sending to file not found');
 			// override the $layout=null, $action=null, $view=null
 			$override_template = ENV::FILE_NOT_FOUND_TEMPLATE();
 			$this->template_file = $override_template;
 			$override_action = CONSTS::$FILE_NOT_FOUND_ACTION;
 		}
+		
+		
 		if ($this->logger->debugEnabled() && $override_template!==null) {
 			$this->logger->debug(__METHOD__.' Template has been set to OVERRIDE VALUE: ['.$override_template.']');
 		}
 		if ($this->logger->debugEnabled() && $override_action!==null) {
 			$this->logger->debug(__METHOD__.' Action has been set to OVERRIDE VALUE: ['.$override_action.']');
 		}
-		$this->action_and_view($override_action);
 		
-	}
-	/**
-	 * If an action is supplied it overrides the calculated action
-	 * (used for 404 at this time)
-	 */
-	private function action_and_view($action=null) {
+		
 		$this->set_layout();
-		$this->call_action($action);
 		$this->render_view();
+		
 	}
 	/**
 	 * each controller must define its own default action
 	 */
 	protected abstract function default_action();
+	/**
+	 * each controller must define its own init action
+	 * init is called at the end of the Base Controller __constructor
+	 */
+	protected abstract function init();
 	/**
 	 * Sets the template file path.  First looks in App, then Lib
 	 *
@@ -114,8 +128,10 @@ abstract class Controller_Base {
 	 * namespace of the layout when it is rendered (if thier is a layout to render.
 	 */
 	protected function render_view() {
-		$this->digest_template();
-		if ($this->using_layout()) {
+		if ($this->use_template) {
+			$this->digest_template();
+		}
+		if ($this->use_layout) {
 			// set a short name ref to $this->payload for ease of use in the view.
 			$payload = $this->payload;
 			include($this->layout_file);
@@ -132,7 +148,7 @@ abstract class Controller_Base {
 		$payload = $this->payload;
 		ob_start();
 		include($this->template_file);
-		if ($this->using_layout()) {
+		if ($this->use_layout) {
 			$this->logger->debug(__METHOD__.' Using Layout [' . $this->layout_file . ']');
 			/**
 			 * pull back any mutations of $payload into $this->payload
@@ -223,18 +239,19 @@ abstract class Controller_Base {
 	 * Stores the path to the layout file.
 	 */
 	private function set_layout() {
-		$layout_dir = ENV::PATH('LAYOUT_DIR','/');
-		$lib_layout_dir = ENV::PATH('LIB_LAYOUT_DIR','/');
-		if (file_exists($layout_dir . $this->view_dir_name . '.php')) {
-			$this->layout_file = $layout_dir . $this->view_dir_name . '.php';
-		} else {
-			$this->layout_file = file_exists($layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php')
-				? $layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php'
-				: $lib_layout_dir . CONSTS::$DEFAULT_LAYOUT.'.php';
+		if ($this->layout_file===null && $this->use_layout) {
+			$layout_dir = ENV::PATH('LAYOUT_DIR','/');
+			$lib_layout_dir = ENV::PATH('LIB_LAYOUT_DIR','/');
+			if (file_exists($layout_dir . $this->view_dir_name . '.php')) {
+				$this->layout_file = $layout_dir . $this->view_dir_name . '.php';
+			} else {
+				$this->layout_file = file_exists($layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php')
+					? $layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php'
+					: $lib_layout_dir . CONSTS::$DEFAULT_LAYOUT.'.php';
+			}
 		}
-	}
-	private function using_layout() {
-		return $this->layout_file !== null;
+		
+		
 	}
 }
 ?>

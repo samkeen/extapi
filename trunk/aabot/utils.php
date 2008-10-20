@@ -5,11 +5,17 @@
  *
  * @author "Sam Keen" <sam@pageindigo.com>
  */
+/**
+ * Look first in the APP root dir then in the FRAMEWORK dir
+ *
+ * @param string $class The name of the class
+ */
 function __autoload($class) {
-	if(file_exists(CONSTS::BASE_APP_PATH.'/' . str_replace('_', '/', $class) . '.php')) {
-		require CONSTS::BASE_APP_PATH.'/' . str_replace('_', '/', $class) . '.php';
+	global $PATH__APP_ROOT, $PATH__FRAMWORK_ROOT;
+	if(file_exists($PATH__APP_ROOT.'/' . str_replace('_', '/', $class) . '.php')) {
+		require $PATH__APP_ROOT.'/' . str_replace('_', '/', $class) . '.php';
 	} else {
-		require CONSTS::BASE_LIB_PATH.'/' . str_replace('_', '/', $class) . '.php';
+		require $PATH__FRAMWORK_ROOT.'/' . str_replace('_', '/', $class) . '.php';
 	}
 }
 /**
@@ -47,7 +53,7 @@ function get_context($request_url_context) {
 	global $logger;
 	$request_url_context = trim($request_url_context,'/ ');
 	$context = array();
-	$requested_response_type = CONSTS::DEFAULT_REQUESTED_RESPONSE_TYPE;
+	$requested_response_type = CONSTS::$DEFAULT_REQUESTED_RESPONSE_TYPE;
 	if (! empty($request_url_context) ) {
 		if(strstr($request_url_context,'/')) {
 			$context = explode('/',$request_url_context);

@@ -5,23 +5,11 @@ abstract class Controller_Base {
 	protected $requested_response_type = null;
 	protected $request_method = null;
 	protected $logger = null;
-	protected $name;
-	
+	// the name used for related files in the View directory (matches name in URL).
+	// ex: Class name CustomRoutes will have view_dir_name of custom_routes
+	protected $view_dir_name;
+	protected $router;
 	protected $requested_action = null;
-	/**
-	 * you can send in an optional action name when you contruct a controller
-	 * and that is set to this variable.  Then when $controller->process() is
-	 * called, this $queued action is invoked (ignoring anything determined by url
-	 * analysis).
-	 * example usage in the Controller_Factory when an unknown controller is called in the URL.
-	 * The factory intanciates the Default controller thusly
-	 * - $controller = new Controller_Default($request_context,CONSTS::REQUEST_CONTROLLER_NOT_FOUND_ACTION);
-	 * then when $controller->process() is called the contoller_not_found_action action of the controller 
-	 * will be invoked. 
-	 *
-	 * @var string
-	 */
-	protected $queued_action = null;
 	
 	protected $template_file = null;
 	protected $layout_file = null;
@@ -32,38 +20,68 @@ abstract class Controller_Base {
 	/**
 	 * Enter description here...
 	 *
-	 * @param array $request_context
-	 * @param string $queued_action (optional action to be called after this contoller is instaciated.)
-	 * @param string $relative_template_path (optional Template file to use regarless of requested URL)
+	 * @param Util_Router $router
 	 */
-	public function __construct(array $request_context, $queued_action=null, $relative_template_path=null) {
+	public function __construct(Util_Router $router) {
 		global $logger;
 		$this->logger = $logger;
+		$this->router = $router;
 		
-		
-		$this->request_context = $request_context;
-		$this->queued_action = $queued_action;
-		if ($relative_template_path!==null) {
-			$this->set_template($relative_template_path);
-		}
-		$this->request_segments = $request_context['request_segments'];
-		$this->requested_response_type = $request_context['requested_response_type'];
-		$this->request_method = $request_context['request_method'];
-		$this->name = strtolower(str_ireplace('controller_','',get_class($this)));
+		$this->request_context = $this->router->request_context();
+		$this->request_segments = $this->request_context['request_segments'];
+		$this->requested_response_type = $this->request_context['requested_response_type'];
+		$this->request_method = $this->request_context['request_method'];
+		$this->view_dir_name = $this->router->requested_controller_name();
 		$this->payload = new SimpleDTO();
 		
-		$this->logger->debug(print_r($this,1));
+//		$this->logger->debug(print_r($this,1));
 		
 	}
 	/**
+	 * file not found internal action
+	 */
+	protected function file_not_found_action() {
+		$this->logger->debug(__METHOD__.' Calling base controller internal File Not Found Action');
+		$this->payload->message = "You've requested an unknown resource";
+	}
+	
+	
+	/**
 	 * main driver method for a controller
 	 */
-	public function process() {
+	public function process($override_template = null, $override_action = null) {
 		$this->logger->debug(__METHOD__.' Calling process');
-		$this->determine_requested_action();
-		$this->set_template_for_action();
+		if ($override_action===null) {
+			$this->determine_requested_action();
+		}
+		if ($override_template===null) {
+			$this->set_template_for_action();
+		} else {
+			$this->template_file = $override_template;
+		}
+		if (! file_exists($this->template_file)) {
+			$this->logger->notice(__METHOD__.' requested template file not found ['.$this->template_file.'], sending to file not found');
+			// override the $layout=null, $action=null, $view=null
+			$override_template = ENV::FILE_NOT_FOUND_TEMPLATE();
+			$this->template_file = $override_template;
+			$override_action = CONSTS::$FILE_NOT_FOUND_ACTION;
+		}
+		if ($this->logger->debugEnabled() && $override_template!==null) {
+			$this->logger->debug(__METHOD__.' Template has been set to OVERRIDE VALUE: ['.$override_template.']');
+		}
+		if ($this->logger->debugEnabled() && $override_action!==null) {
+			$this->logger->debug(__METHOD__.' Action has been set to OVERRIDE VALUE: ['.$override_action.']');
+		}
+		$this->action_and_view($override_action);
+		
+	}
+	/**
+	 * If an action is supplied it overrides the calculated action
+	 * (used for 404 at this time)
+	 */
+	private function action_and_view($action=null) {
 		$this->set_layout();
-		$this->call_action();
+		$this->call_action($action);
 		$this->render_view();
 	}
 	/**
@@ -78,16 +96,16 @@ abstract class Controller_Base {
 	protected function set_template($relative_path) {
 		$relative_path = ltrim($relative_path,'/');
 		$file_path = null;
-		if (file_exists(CONSTS::PATH('TEMPLATE_DIR','/'.$relative_path))) {
-			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.CONSTS::PATH('TEMPLATE_DIR','/'.$relative_path));
-			$this->template_file = CONSTS::PATH('TEMPLATE_DIR','/'.$relative_path);
-		} else if (file_exists(CONSTS::PATH('LIB_TEMPLATE_DIR','/'.$relative_path))) {
-			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.CONSTS::PATH('LIB_TEMPLATE_DIR','/'.$relative_path));
-			$this->template_file = CONSTS::PATH('LIB_TEMPLATE_DIR','/'.$relative_path);
+		if (file_exists(ENV::PATH('TEMPLATE_DIR','/'.$relative_path))) {
+			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.ENV::PATH('TEMPLATE_DIR','/'.$relative_path));
+			$this->template_file = ENV::PATH('TEMPLATE_DIR','/'.$relative_path);
+		} else if (file_exists(ENV::PATH('LIB_TEMPLATE_DIR','/'.$relative_path))) {
+			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.ENV::PATH('LIB_TEMPLATE_DIR','/'.$relative_path));
+			$this->template_file = ENV::PATH('LIB_TEMPLATE_DIR','/'.$relative_path);
 		} else {
 			$this->logger->debug(__METHOD__.'  Attempted to Explicitly set template file to : ['
-				.CONSTS::PATH('TEMPLATE_DIR','/'.$relative_path). '] But file did not exist.');
-			$this->template_file = CONSTS::PATH('TEMPLATE_DIR','/'.$relative_path);
+				.ENV::PATH('TEMPLATE_DIR','/'.$relative_path). '] But file did not exist.');
+			$this->template_file = ENV::PATH('TEMPLATE_DIR','/'.$relative_path);
 		}
 	}
 	
@@ -112,10 +130,6 @@ abstract class Controller_Base {
 	private function digest_template() {
 		// set a short name ref to $this->payload for ease of use in the view.
 		$payload = $this->payload;
-		if ( ! file_exists($this->template_file)) {
-			$this->logger->notice(__METHOD__.' requested template file not found ['.$this->template_file.'], sending to file not found');
-			Util_Core::send_to_unknown_request($this->request_context);
-		}
 		ob_start();
 		include($this->template_file);
 		if ($this->using_layout()) {
@@ -133,30 +147,26 @@ abstract class Controller_Base {
 		}
 	}
 	
-	private function call_action() {
-		$the_action = $this->requested_action;
+	private function call_action($action=null) {
+		$the_action = $action!==null?$action:$this->requested_action;
 		$this->logger->debug(__METHOD__.' Invoking Action [' . $the_action .'] ');
 		$this->$the_action();
 	}
 	private function determine_requested_action() {
-		if ($this->queued_action) {
-			$this->logger->notice(__METHOD__.' Found queued Action so setting requested action to: '.$this->queued_action);
-			$this->requested_action = $this->queued_action;
-		} else {
-			// if we have a leftmost segemnt and it is a action method for this controller
-			if(isset($this->request_segments[0]) && method_exists($this,str_replace('-','_',$this->request_segments[0]).'_action')) {
-				$this->requested_action = str_replace('-','_',array_shift($this->request_segments)).'_action';
-				$this->logger->debug(__METHOD__.'  Action was found to be: '.$this->requested_action);	
-			} else { // use the default action
-				if ($this->logger->debugEnabled()) {
-					if (isset($this->request_segments[0])) {
-						$this->logger->debug(__METHOD__.'  Did not find requested Action['.str_replace('-','_',$this->request_segments[0])
-							.'_action] Sending to File not found');
-						Util_Core::send_to_unknown_request($this->request_context);	
-					} else {
-						$this->requested_action = CONSTS::DEFAULT_ACTION.'_action';
-						$this->logger->debug(__METHOD__.' No action supplied, using default action ['.CONSTS::DEFAULT_ACTION.'_action]');
-					}
+		// if we have a leftmost segemnt and it is a action method for this controller
+		$possible_action = isset($this->request_segments[0]) ? str_replace('-','_',$this->request_segments[0]['value']).'_action' : null;
+		if($possible_action!==null && method_exists($this,$possible_action)) {
+			$this->requested_action = $possible_action;
+			array_shift($this->request_segments);
+			$this->logger->debug(__METHOD__.'  Action was found to be: '.$this->requested_action);	
+		} else { // use the default action
+			if ($this->logger->debugEnabled()) {
+				if (isset($this->request_segments[0])) {
+					$this->requested_action = CONSTS::$DEFAULT_ACTION;
+					$this->logger->debug(__METHOD__.'  Did not find requested Action['.$possible_action.'] Sending to File not found');	
+				} else {
+					$this->requested_action = CONSTS::$DEFAULT_ACTION;
+					$this->logger->debug(__METHOD__.' No action supplied, using default action ['.CONSTS::$DEFAULT_ACTION.']');
 				}
 			}
 		}
@@ -178,31 +188,33 @@ abstract class Controller_Base {
 	 */
 	private function detemine_deepest_template_match() {
 		$deepest_template_file_path = null;
-		$template_path = CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'/'.str_replace('_action','',$this->requested_action).'/';
+		$template_path = $this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'/';
 		// look for template starting with all request segments and then working down
 		for($index=count($this->request_segments);$index>=1;$index--) {
-			$possible_template_file = $template_path.implode('/',array_slice($this->request_segments,0,$index)).".php";
+			$segment_names = array_slice($this->request_segments,0,$index);
+			$segments = array();
+			foreach ($segment_names as $name) {
+				$segments[] = $name['value'];
+			}
+			$possible_template_file = $template_path.implode('/',$segments).".php";
 			$this->logger->debug(__METHOD__.' trying template match for: '.$possible_template_file);
-			if (file_exists($possible_template_file)) {
+			if ($deepest_template_file_path = ENV::PATH_TO_TEMPLATE_FILE($possible_template_file)) {
 				$this->logger->debug(__METHOD__.' Found deepest template file match: '.$possible_template_file);
-				$deepest_template_file_path = $possible_template_file;
 				break;
 			}
 		}
 		// look for a template for the action
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'/'.str_replace('_action','',$this->requested_action).'.php');
-			if (file_exists(CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'/'.str_replace('_action','',$this->requested_action).'.php')) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match: '.CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'/'.str_replace('_action','',$this->requested_action).'.php');
-				$deepest_template_file_path = CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'/'.str_replace('_action','',$this->requested_action).'.php';
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php');
+			if ($deepest_template_file_path = ENV::PATH_TO_TEMPLATE_FILE($this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php') ) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php');
 			}
 		}
 		// finally look for a template for the contoller
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'.php');
-			if (file_exists(CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'.php')) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match: '.CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'.php');
-				$deepest_template_file_path = CONSTS::PATH('TEMPLATE_DIR','/').$this->name.'.php';
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
+			if ($deepest_template_file_path = ENV::PATH_TO_TEMPLATE_FILE($this->view_dir_name.'.php')) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[controller]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
 			}
 		}
 		return $deepest_template_file_path;
@@ -211,14 +223,14 @@ abstract class Controller_Base {
 	 * Stores the path to the layout file.
 	 */
 	private function set_layout() {
-		$layout_dir = CONSTS::PATH('LAYOUT_DIR','/');
-		$lib_layout_dir = CONSTS::PATH('LIB_LAYOUT_DIR','/');
-		if (file_exists($layout_dir . $this->name . '.php')) {
-			$this->layout_file = $layout_dir . $this->name . '.php';
+		$layout_dir = ENV::PATH('LAYOUT_DIR','/');
+		$lib_layout_dir = ENV::PATH('LIB_LAYOUT_DIR','/');
+		if (file_exists($layout_dir . $this->view_dir_name . '.php')) {
+			$this->layout_file = $layout_dir . $this->view_dir_name . '.php';
 		} else {
-			$this->layout_file = file_exists($layout_dir . CONSTS::DEFAULT_LAYOUT . '.php')
-				? $layout_dir . CONSTS::DEFAULT_LAYOUT . '.php'
-				: $lib_layout_dir . CONSTS::DEFAULT_LAYOUT.'.php';
+			$this->layout_file = file_exists($layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php')
+				? $layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php'
+				: $lib_layout_dir . CONSTS::$DEFAULT_LAYOUT.'.php';
 		}
 	}
 	private function using_layout() {

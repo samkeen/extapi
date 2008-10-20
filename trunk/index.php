@@ -1,10 +1,8 @@
 <?php
-require 'CONSTS.php';
-require CONSTS::BASE_LIB_PATH.'/utils.php';
-
-$custom_routes = array(
-	'/' => '/custom/home'
-);
+require 'app/bootstrap.php';
 $logger = new Logger(Logger::DEBUG);
-$controller = Controller_Factory::get_instance($custom_routes);
+
+$custom_routes = isset($custom_routes)?$custom_routes:null;
+$router = new Util_Router($custom_routes);
+$controller = Controller_Factory::get_instance($router);
 $controller->process();

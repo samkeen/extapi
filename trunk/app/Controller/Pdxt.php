@@ -1,10 +1,17 @@
 <?php
-class Controller_Sms extends Controller_Base {
+class Controller_Pdxt extends Controller_Base {
 	
+	protected function init() {
+		
+	}
 	protected function default_action() {
-		$this->payload->message = "Hello, this is the SMS controller";
+		$this->payload->message = "Hello, this is the PDXt controller";
 		$this->payload->controller = print_r($this,1);
 	}
+	protected function sms_action() {
+		$this->payload->message = "passed through the SMS action";
+	}
+	
 	
 //	$this->sms_service = Weave::instance()->sms['service_name'];
 	

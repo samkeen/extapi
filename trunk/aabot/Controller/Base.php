@@ -17,6 +17,8 @@ abstract class Controller_Base {
 	protected $template_file = null;
 	protected $layout_file = null;
 	
+	// collected debug messages that can be shown in the view
+	private $debug_messages = array();
 	
 	protected $payload;
 	protected $rendered_template;
@@ -37,12 +39,11 @@ abstract class Controller_Base {
 		$this->request_method = $this->request_context['request_method'];
 		$this->view_dir_name = $this->router->requested_controller_name();
 		$this->payload = new SimpleDTO();
-		
-//		$this->logger->debug(print_r($this,1));
 		$this->init();
 	}
 	/**
 	 * file not found internal action
+	 * called from Factory if Controller is not found
 	 */
 	protected function file_not_found_action() {
 		$this->logger->debug(__METHOD__.' Calling base controller internal File Not Found Action');
@@ -76,8 +77,8 @@ abstract class Controller_Base {
 			$this->logger->notice(__METHOD__.' requested template file not found ['.$this->template_file.'], sending to file not found');
 			// override the $layout=null, $action=null, $view=null
 			$override_template = ENV::FILE_NOT_FOUND_TEMPLATE();
+			$this->add_debug_message('Unable to locate file for Template ['.$this->template_file.']');
 			$this->template_file = $override_template;
-			$override_action = CONSTS::$FILE_NOT_FOUND_ACTION;
 		}
 		
 		
@@ -101,7 +102,7 @@ abstract class Controller_Base {
 	 * each controller must define its own init action
 	 * init is called at the end of the Base Controller __constructor
 	 */
-	protected abstract function init();
+	protected function init(){}
 	/**
 	 * Sets the template file path.  First looks in App, then Lib
 	 *
@@ -136,6 +137,17 @@ abstract class Controller_Base {
 			$payload = $this->payload;
 			include($this->layout_file);
 		}
+	}
+	protected function add_debug_message($message, $escape_html = true) {
+		$this->debug_messages[] = $escape_html ? htmlentities($message, ENT_QUOTES, 'UTF-8') : $message;
+	}
+	/**
+	 * return the collected debug messages
+	 */
+	protected function debug_messages($in_html_form = true) {
+		return $in_html_form
+			? '<ul><li>'.implode('</li><li>',$this->debug_messages).'</li></ul>' 
+			: implode("\n",$this->debug_messages);
 	}
 	/**
 	 * Stores the rendered contents of the template in 
@@ -250,8 +262,6 @@ abstract class Controller_Base {
 					: $lib_layout_dir . CONSTS::$DEFAULT_LAYOUT.'.php';
 			}
 		}
-		
-		
 	}
 }
 ?>

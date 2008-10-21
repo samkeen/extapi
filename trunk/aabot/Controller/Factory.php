@@ -12,6 +12,7 @@ class Controller_Factory {
 		} else {
 			$logger->debug(__METHOD__.' Unknown requested Contoller [' . $requested_controller . '] Sending to Unknown request handler');
 			$controller = new Controller_Default($router);
+			$controller->add_debug_message('Unable to locate a file for Controller ['.$requested_controller.']');
 			$controller->process(ENV::FILE_NOT_FOUND_TEMPLATE(), CONSTS::$FILE_NOT_FOUND_ACTION);
 			exit();
 		}

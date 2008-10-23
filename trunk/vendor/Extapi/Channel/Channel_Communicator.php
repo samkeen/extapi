@@ -22,10 +22,14 @@ abstract class Channel_Communicator {
 		$config_folder =  dirname(dirname(__FILE__)).'/config/';
 		$config = parse_ini_file($config_folder.$file.'.ini',true);
 		foreach ($config as $key => $value) {
-			if (substr($key,0,4)=='sms.') {
+			if (substr($key,0,4)=='sms/') {
 				$this->channel_signing_keys[substr($key,4)] = isset($value['signature_key'])?$value['signature_key']:null;
 				unset($value['signature_key']);
 				$config['sms']['channels'][substr($key,4)] = $value;
+				unset($config[$key]);
+			}
+			if (substr($key,0,19)=='sms_channel_fields/') {
+				$config['sms']['channels'][substr($key,19)]['sms_channel_fields_map'] = $value;
 				unset($config[$key]);
 			}
 		}

@@ -29,7 +29,36 @@ class Controller_Pdxt extends Controller_Base {
 		$this->payload->sms_channel = $sms_channel->config();
 		$this->payload->user_id = 'samkeen';
 	}
+/*
+ * Subscription ping
+ * $_REQUESTArray
+(
+    [;c;] => pdxt/sms/receiver
+    [sms_prefix] => pdxtt
+    [short_code] => 88147
+    [uid] => samkeen
+    [min] => +15034733242
+    [event] => SUBSCRIPTION_UPDATE
+)
+ * 
+ * ?sms_prefix=pdxtt&short_code=88147&uid=samkeen&min=+15034733242&event=SUBSCRIPTION_UPDATE
+ */
 
+/*
+ * user message
+ * $_REQUESTArray
+(
+    [;c;] => pdxt/sms/receiver
+    [sms_prefix] => pdxtt
+    [short_code] => 88147
+    [uid] => samkeen
+    [body] => hello
+    [min] => +15034733242
+    [event] => MO
+)
+ * 
+ * ?sms_prefix=pdxtt&short_code=88147&uid=samkeen&body=hello&min=+15034733242&event=MO
+ */
 	private function receiver() {
 		ENV::load_vendor_file('Extapi/Channel/Sms');
 		header('Content-type: text/plain',true);

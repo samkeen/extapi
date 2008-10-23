@@ -33,6 +33,7 @@ class Controller_Pdxt extends Controller_Base {
 	private function receiver() {
 		ENV::load_vendor_file('Extapi/Channel/Sms');
 		header('Content-type: text/plain',true);
+		$this->logger->debug('$_REQUEST'.print_r($_REQUEST,1));
 		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
 print_r($sms_channel);
 		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {

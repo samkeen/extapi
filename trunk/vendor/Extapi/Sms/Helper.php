@@ -84,7 +84,7 @@ See othr cmd\'s @ shizzow.com/sms';
 	// output destined for SMS reply when in DEBUG mode
 	private $debug_summary = 'DEBUG:';
 	
-	public function __construct(Weave_Log_Logger $logger) {
+	public function __construct(Logger $logger) {
 		$this->logger = $logger;
 	}
 	/**

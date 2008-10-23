@@ -42,6 +42,31 @@ abstract class Controller_Base {
 		$this->init();
 	}
 	/**
+	 * shift off the next request segment if it exists
+	 */
+	protected function next_request_segment() {
+		return isset($this->request_segments[0]) ? array_shift($this->request_segments) : null;
+	}
+	/**
+	 * shift off the next request segment value if it exists
+	 * throws away the sub designation value
+	 */
+	protected function next_request_segment_value() {
+		$next_segment = null;
+		if (isset($this->request_segments[0])) {
+			$next_segment = array_shift($this->request_segments);
+			$next_segment = $next_segment['value'];
+		}
+		return $next_segment;
+	}
+	/**
+	 * allow a controller init method or action to declare it does not return a view.
+	 */
+	protected function viewless() {
+		$this->use_layout = false;
+		$this->use_template = false;
+	}
+	/**
 	 * file not found internal action
 	 * called from Factory if Controller is not found
 	 */

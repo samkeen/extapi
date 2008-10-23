@@ -14,7 +14,7 @@ class Util_Router {
 
 	
 	const PATH_SEPARATOR = '/';
-	const REDIRECT_VAR = 'c';
+	const REDIRECT_VAR = ';c;';
 	CONST REQUEST_METHOD_TOKEN = '_method';
 	
 	public function __construct(array $custom_routes = null) {
@@ -35,6 +35,11 @@ class Util_Router {
 			'request_segments' => $this->requested_url_segments, 
 			'requested_response_type' => $this->requested_response_type
 		);
+	}
+	
+	public static function request_params() {
+		$strip_from_request = array(self::REDIRECT_VAR=>null);
+		return array_map('urldecode',array_diff_key($_REQUEST,$strip_from_request));
 	}
 	private function shift_segment() {
 		return isset($this->requested_url_segments[0])?array_shift($this->requested_url_segments):false;

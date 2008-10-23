@@ -68,24 +68,6 @@ function t($text, $echo_output = false) {
 		return $text;
 	}
 }
-///**
-// * determine and return the type of REST request method
-// * ['put','delete','post','get']
-// *
-// * @return string The type of REST request method
-// */
-//function request_method() {
-//	$acceptable_request_methods = array('put','delete','post','get');
-//	$request_method = 'get';
-//	if (count($_POST)) { 
-//		if( ! isset($_POST['_method'])) {
-//			$request_method = 'post';
-//		} else {
-//			$request_method = in_array($_POST['_method'],$acceptable_request_methods) ? $_POST['_method'] : $request_method;
-//		}
-//	}
-//	return $request_method;
-//}
 
 function http_redirect($path, $code) {
 	header('Location: '.$path);

@@ -2,6 +2,7 @@
 $PATH__WEB_ROOT = dirname(dirname(__FILE__));
 $PATH__APP_ROOT = $PATH__WEB_ROOT.'/app';
 $PATH__FRAMWORK_ROOT = $PATH__WEB_ROOT.'/aabot';
+$PATH__VENDOR_ROOT = $PATH__WEB_ROOT.'/vendor';
 
 require $PATH__FRAMWORK_ROOT.'/utils.php';
 // include custom routes file which should put $custom_routes in scope;
@@ -33,7 +34,12 @@ final class CONSTS {
 
 final class ENV {
 	
-	static final function PATH($path, $append=null) {
+	public static final function load_vendor_file($vendor_package_name) {
+		global $PATH__VENDOR_ROOT;
+		require $PATH__VENDOR_ROOT.'/'.$vendor_package_name.'.php';
+	}
+	
+	public static final function PATH($path, $append=null) {
 		global $PATH__APP_ROOT,$PATH__FRAMWORK_ROOT;
 		$append = ($append!=null) ? '/'.ltrim($append,'/') : '';
 		if(substr($path,0,4)=='LIB_') {

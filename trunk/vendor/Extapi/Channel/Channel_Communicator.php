@@ -6,8 +6,11 @@
 abstract class Channel_Communicator {
 	
 	protected $config;
+	// store signing keys seperate from other config settings for security
+	protected $channel_signing_keys;
 	protected $request;
 	protected $logger;
+	protected $default_channel_provider;
 	
 	protected abstract function collect_request_params();
 	protected abstract function authenticate_request();
@@ -20,6 +23,8 @@ abstract class Channel_Communicator {
 		$config = parse_ini_file($config_folder.$file.'.ini',true);
 		foreach ($config as $key => $value) {
 			if (substr($key,0,4)=='sms.') {
+				$this->channel_signing_keys[substr($key,4)] = isset($value['signature_key'])?$value['signature_key']:null;
+				unset($value['signature_key']);
 				$config['sms']['channels'][substr($key,4)] = $value;
 				unset($config[$key]);
 			}

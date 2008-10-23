@@ -17,6 +17,10 @@ class Extapi_Channel_Sms extends Channel_Communicator {
 		$this->request = $request;
 		$this->logger = $logger;
 		parent::load_config('channels', 'sms');
+		$this->default_channel_provider = $this->config['default_channel'];
+	}
+	public function config() {
+		return array_get_else($this->config['channels'], $this->default_channel_provider);
 	}
 	/**
 	 * @see Service_Communicator::collect_request_params()

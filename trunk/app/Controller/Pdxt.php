@@ -23,17 +23,22 @@ class Controller_Pdxt extends Controller_Base {
 		$this->payload->message = "passed through the SMS action";
 		$this->payload->this = print_r($this,1);
 	}
-	
+	protected function register_action() {
+		ENV::load_vendor_file('Extapi/Channel/Sms');
+		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
+		$this->payload->sms_channel = $sms_channel->config();
+		$this->payload->user_id = 'samkeen';
+	}
 
 	private function receiver() {
 		ENV::load_vendor_file('Extapi/Channel/Sms');
 		header('Content-type: text/plain',true);
-		$sms_service = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
-print_r($sms_service);
-		if ($sms_service->collect_request_params() && $sms_service->authenticate_request()) {
-			$sms_service->interpret_request_statement();
-			if ($sms_service->has_feedback()) {
-				$this->payload->feedback = $sms_service->gather_feedback();
+		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
+print_r($sms_channel);
+		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
+			$sms_channel->interpret_request_statement();
+			if ($sms_channel->has_feedback()) {
+				$this->payload->feedback = $sms_channel->gather_feedback();
 			} else {
 				$this->viewless();
 			}
@@ -67,5 +72,6 @@ print_r($sms_service);
 //		}
 //		die;
 	}
+
 
 }

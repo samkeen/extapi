@@ -26,7 +26,7 @@ class Controller_Pdxt extends Controller_Base {
 	protected function register_action() {
 		ENV::load_vendor_file('Extapi/Channel/Sms');
 		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
-		$this->payload->sms_channel = $sms_channel->config();
+		$this->payload->zeep_channel = $sms_channel->config_for_provider('zeep');
 		$this->payload->user_id = 'samkeen';
 	}
 /*
@@ -60,12 +60,14 @@ class Controller_Pdxt extends Controller_Base {
  * ?sms_prefix=pdxtt&short_code=88147&uid=samkeen&body=hello&min=+15034733242&event=MO
  */
 	private function receiver() {
-		ENV::load_vendor_file('Extapi/Channel/Sms');
+		
+		ENV::load_vendor_file('Extapi/Channel/Communicator');
 		header('Content-type: text/plain',true);
+//print_r($this);
 		$this->logger->debug('$_REQUEST'.print_r($_REQUEST,1));
-		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
+		$sms_channel = new Extapi_Channel_Communicator($this->requested_response_type, Util_Router::request_params(), $this->logger);
 print_r($sms_channel);
-		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
+		if ($sms_channel->communicator->collect_request_params() && $sms_channel->authenticate_request()) {
 			$sms_channel->interpret_request_statement();
 			if ($sms_channel->has_feedback()) {
 				$this->payload->feedback = $sms_channel->gather_feedback();

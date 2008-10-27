@@ -1,62 +1,54 @@
 <?php
-class Extapi_Channel_Communicator {
+abstract class Extapi_Channel_Communicator {
 	
-	private $config;
+	protected $config;
 	// store signing keys seperate from other config settings for security
-	private $channel_signing_keys;
-	private $request;
-	private $logger;
-	private $requesting_channel_name;
-	public $communicator;
+	protected $channel_signing_key;
+	protected $request;
+	protected $logger;
+	protected $requesting_channel_name;
+	// all possible communication fields for this type of channel
+	protected $channel_communication_fields = array();
+	// communication fields for this specific channel 
+	// [public]: need to access from Service classes
+	public $mapped_channel_communication_fields = array();
+	// fields that are required to have values in the request
+	protected $required_channel_communication_fields = array();
 	
-	protected $mapped_channel_communication_fields = array();
-	
+	public abstract function collect_request_params();
+	public abstract function authenticate_request();
+		
 	public function __construct($requesting_channel_name, array $request, Logger $logger) {
 		$this->requesting_channel_name = $requesting_channel_name;
 		$this->request = $request;
 		$this->logger = $logger;
-		$this->load_config('channels', 'sms');
-		$this->load_specific_communicator();
+		$this->load_config('channels', 'sms', $requesting_channel_name);
 	}
-	public function config_for_provider($provider_name) {
-		return array_get_else($this->config['channels'],$provider_name);
+	public function config() {
+		return array_get_else($this->config);
 	}
 	public function communicator() {
 		$this->specific_communicator;
 	}
-	private function load_config($file, $section=null) {
+	private function load_config($file, $section=null, $channel_name=null) {
 		$config_folder =  dirname(dirname(__FILE__)).'/config/';
 		$config = parse_ini_file($config_folder.$file.'.ini',true);
+		$channel_key = $section.'/'.$channel_name;
 		foreach ($config as $key => $value) {
-			if (substr($key,0,4)=='sms/') {
-				$this->channel_signing_keys[substr($key,4)] = isset($value['signature_key'])?$value['signature_key']:null;
+			if (substr($key,0,strlen($channel_key))==$channel_key) {
+				$this->channel_signing_key = isset($value['signature_key'])?$value['signature_key']:null;
 				unset($value['signature_key']);
-				$config['sms']['channels'][substr($key,4)] = $value;
-				unset($config[$key]);
+				$this->config = $value;
 			}
-			else if (substr($key,0,19)=='sms_channel_fields/') {
-				$config['sms']['channels'][substr($key,19)]['sms_channel_fields_map'] = $value;
-				unset($config[$key]);
-			}
-			
 		}
-		if ($section!==null) {
-			$this->config = isset($config[$section]) ? $config[$section] : null;
-		} else {
-			$this->config = $config;
-		}
-		foreach ($this->config['channels'][$this->config['default_channel']]['sms_channel_fields_map'] as $key => $value) {
+		foreach (array_get_else($config,'sms_channel_fields/'.$channel_name,array()) as $key => $value) {
 			if($key=='required_fields') {
-				$this->mapped_channel_communication_fields[$key] = array_map('trim',explode(',',$value));
+				$this->required_channel_communication_fields = array_map('trim',explode(',',$value));
 			} else {
 				$this->mapped_channel_communication_fields[$key] = array_get_else($this->request, $value);
 			}
 		}
-	}
-	private function load_specific_communicator() {
-		$specific_communicator = 'Channel_'.ucfirst($this->requesting_channel_name);
-		require $specific_communicator.'.php';
-		$this->communicator = new $specific_communicator;
+		$this->channel_communication_fields = array_get_else($config,$section.'_channel_fields',array());
 	}
 }
 

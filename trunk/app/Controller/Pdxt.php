@@ -26,7 +26,7 @@ class Controller_Pdxt extends Controller_Base {
 	protected function register_action() {
 		ENV::load_vendor_file('Extapi/Channel/Sms');
 		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
-		$this->payload->zeep_channel = $sms_channel->config_for_provider('zeep');
+		$this->payload->zeep_channel = $sms_channel->config();
 		$this->payload->user_id = 'samkeen';
 	}
 /*
@@ -61,16 +61,19 @@ class Controller_Pdxt extends Controller_Base {
  */
 	private function receiver() {
 		
-		ENV::load_vendor_file('Extapi/Channel/Communicator');
+		ENV::load_vendor_file('Extapi/Channel/Zeep');
 		header('Content-type: text/plain',true);
 //print_r($this);
 		$this->logger->debug('$_REQUEST'.print_r($_REQUEST,1));
-		$sms_channel = new Extapi_Channel_Communicator($this->requested_response_type, Util_Router::request_params(), $this->logger);
+		$sms_channel = new Extapi_Channel_Zeep($this->requested_response_type, Util_Router::request_params(), $this->logger);
 print_r($sms_channel);
-		if ($sms_channel->communicator->collect_request_params() && $sms_channel->authenticate_request()) {
-			$sms_channel->interpret_request_statement();
-			if ($sms_channel->has_feedback()) {
-				$this->payload->feedback = $sms_channel->gather_feedback();
+		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
+			ENV::load_vendor_file('Extapi/Service/Tmet');
+			$tmet_service = new Extapi_Service_Tmet($sms_channel, new Util_Http());
+			$tmet_service->interpret_request_statement();
+			$tmet_service->act_on_request_statement();
+			if ($tmet_service->has_feedback()) {
+				$this->payload->feedback = $tmet_service->gather_feedback();
 			} else {
 				$this->viewless();
 			}

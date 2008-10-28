@@ -14,7 +14,6 @@ final class CONSTS {
 	CONST VIEW_DIR = 'View';
 	
 	// default app settings
-	public static $DEFAULT_REQUESTED_RESPONSE_TYPE = 'html';
 	public static $DEFAULT_CONTROLLER = 'Default';
 	public static $DEFAULT_TEMPLATE = 'default';
 	public static $DEFAULT_LAYOUT = 'default';
@@ -30,13 +29,25 @@ final class CONSTS {
 	public static $LIB_TEMPLATE_DIR = '/View/templates';
 	
 	public static $FILE_NOT_FOUND_TEMPLATE = '/default/file_not_found.php';
+	
+	public static $RESPONSE_GLOBAL_DEFAULT = 'html';
+	public static $RESPONSE_HTML = 'html';
+	public static $RESPONSE_JSON = 'json';
+	public static $RESPONSE_TEXT = 'txt';
 }
 
 final class ENV {
 	
+	public static $log;
+	
 	public static final function load_vendor_file($vendor_package_name) {
+		$success = false;
 		global $PATH__VENDOR_ROOT;
-		require $PATH__VENDOR_ROOT.'/'.$vendor_package_name.'.php';
+		if (file_exists($PATH__VENDOR_ROOT.'/'.$vendor_package_name.'.php')) {
+			require $PATH__VENDOR_ROOT.'/'.$vendor_package_name.'.php';
+			$success = true;
+		}
+		return $success;
 	}
 	
 	public static final function PATH($path, $append=null) {

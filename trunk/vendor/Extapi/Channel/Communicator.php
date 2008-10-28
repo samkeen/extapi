@@ -50,6 +50,9 @@ abstract class Extapi_Channel_Communicator {
 		}
 		$this->channel_communication_fields = array_get_else($config,$section.'_channel_fields',array());
 	}
+	protected function config_get($key) {
+		return array_get_else($this->config,$key);
+	}
 }
 
 ?>

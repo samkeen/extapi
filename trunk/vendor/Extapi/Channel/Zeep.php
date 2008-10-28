@@ -15,12 +15,12 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Communicator {
 		$authenticated = false;
 		// authenticate the request is from Zeep
 		$authenticated = 
-			$this->config['channel_short_code'] == $this->mapped_channel_communication_fields['channel_short_code'];
+			$this->config_get('channel_short_code') == array_get_else($this->mapped_channel_communication_fields,'channel_short_code');
 		// authenticate the user making the request
 		$authenticated = 
-			$this->mapped_channel_communication_fields['sms_user_id'] == 'samkeen'
+			array_get_else($this->mapped_channel_communication_fields,'sms_user_id') == 'samkeen'
 			&&
-			$this->mapped_channel_communication_fields['sms_user_number'] == '15034733242';
+			array_get_else($this->mapped_channel_communication_fields,'sms_user_number') == '15034733242';
 		return $authenticated;
 	}
 	
@@ -56,8 +56,50 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Communicator {
 		}
 		return array('Authorization' => $authorization_header, 'Date' => $httpDate);
 	}
-
-
+	
+	/**
+	* Send the SMS Notification message.
+	*
+	* 
+	*/
+	public function send_channel_message($channel_recipients, Util_Http $http) {
+		$channel_recipients = is_array($channel_recipients)?$channel_recipients:array($channel_recipients);
+		global $logger;
+		$url = $this->config_get('api_uri');
+		foreach ($channel_recipients as $channel_recipient) {
+			$message = array_get_else($channel_recipient,'message');
+			$username = array_get_else($channel_recipient,'user_name');
+			if ($logger->debugEnabled()) {
+				$logger->debug(__METHOD__.' Building auth header with '
+					."\nservice_name[".$this->config_get('channel_name')."]"
+					."\napi_key [".$this->config_get('api_key')."]"
+					."\nsignature_key [".$this->channel_signing_key."]"
+					."\nusername [".$username."]"
+					."\nbody [".$message."]");
+			}
+			if ($username!==null) {
+				$authorization_headers = $this->generate_authorization_headers(
+					$this->config_get('channel_name'),
+					$this->config_get('api_key'), 
+					$this->channel_signing_key,
+					'user_id='.urlencode($username).'&body='.urlencode($message));
+				$http->headers = $authorization_headers;
+				$resp = $http->post($url, array('user_id' => $username, 'body' => $message));
+				$logger->debug(__METHOD__.'SMS API RESPONSE: ['.$resp. ']');
+			} else {
+				$logger->error(__METHOD__.' SMS NOT posted. Username was null.  $sms_recipient:'.print_r($channel_recipient,1));
+			}
+		}
+		/**
+POST /api/send_message HTTP/1.1
+Host: zeepmobile.com
+Authorization: Zeep cef7a046258082993759bade995b3ae8:XGPPx8+Me8RBoEUTPO6LSiSLDn4=
+Date: Sat, 27 Sep 2008 21:26:11 GMT
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 70
+user_id=1234&body=Art+thou+not+Romeo%2C+and+a+Montague%3F
+		**/
+	}
 }
 
 ?>

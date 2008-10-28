@@ -7,6 +7,7 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 	private $stop_id = null;
 	private $vehicle_id = null;
 	
+	
 	/**
 	 * 
 	 */
@@ -31,7 +32,7 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 	 * @see Extapi_Service_Base::act_on_request_statement()
 	 */
 	public function act_on_request_statement() {
-		return $this->get_arrivals($this->stop_id, $this->vehicle_id);
+		$this->feedback = $this->get_arrivals($this->stop_id, $this->vehicle_id);
 	}
 	
 	/**
@@ -39,15 +40,7 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 	 * @see Extapi_Service_Base::gather_feedback()
 	 */
 	public function gather_feedback() {
-	
-	}
-	
-	/**
-	 * 
-	 * @see Extapi_Service_Base::has_feedback()
-	 */
-	public function has_feedback() {
-	
+		return $this->feedback;
 	}
 	
 	private function get_arrivals($stop_id=null, $vehicle_id=null) {

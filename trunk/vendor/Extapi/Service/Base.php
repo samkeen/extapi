@@ -5,15 +5,21 @@ abstract class Extapi_Service_Base {
 	protected $channel;
 	protected $config;
 	protected $http_util;
+	protected $feedback = null;
 	
 	public abstract function interpret_request_statement();
 	public abstract function act_on_request_statement();
-	public abstract function has_feedback();
 	public abstract function gather_feedback();
 	
 	public function __construct(Extapi_Channel_Communicator $channel) {
 		$this->channel = $channel;
 	}
+	
+	public function has_feedback() {
+		return $this->feedback !== null;
+	
+	}
+	
 	/**
 	 * @todo pull this out to a util class (Channel_Communicator has the same method); 
 	 */

@@ -2,7 +2,7 @@
 class Controller_Pdxt extends Controller_Base {
 	
 	protected function init() {
-		
+		$this->default_response_type = CONSTS::$RESPONSE_TEXT;
 	}
 	protected function default_action() {
 		$this->payload->message = "Hello, this is the PDXt controller";
@@ -19,13 +19,14 @@ class Controller_Pdxt extends Controller_Base {
 				;
 			break;
 		}
-		
 		$this->payload->message = "passed through the SMS action";
 		$this->payload->this = print_r($this,1);
 	}
 	protected function register_action() {
-		ENV::load_vendor_file('Extapi/Channel/Sms');
-		$sms_channel = new Extapi_Channel_Sms(Util_Router::request_params(), $this->logger);
+		$vendor = new Util_VendorFactory('extapi');
+		$sms_channel = $vendor->get_instance('channel/zeep');
+//		ENV::load_vendor_file('Extapi/Channel/Factory');
+//		$sms_channel = new Extapi_Channel_Zeep('zeep', Util_Router::request_params(), $this->logger);
 		$this->payload->zeep_channel = $sms_channel->config();
 		$this->payload->user_id = 'samkeen';
 	}
@@ -60,52 +61,36 @@ class Controller_Pdxt extends Controller_Base {
  * ?sms_prefix=pdxtt&short_code=88147&uid=samkeen&body=hello&min=+15034733242&event=MO
  */
 	private function receiver() {
-		
+		$this->use_layout = false;
+		$requesting_channel = $this->next_request_segment_value();
 		ENV::load_vendor_file('Extapi/Channel/Zeep');
 		header('Content-type: text/plain',true);
 //print_r($this);
-		$this->logger->debug('$_REQUEST'.print_r($_REQUEST,1));
-		$sms_channel = new Extapi_Channel_Zeep($this->requested_response_type, Util_Router::request_params(), $this->logger);
-print_r($sms_channel);
+		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
+		$sms_channel = new Extapi_Channel_Zeep($requesting_channel, Util_Router::request_params(), $this->logger);
+//print_r($sms_channel);
 		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
-			$tmet_service = new Extapi_Service_Tmet($sms_channel, new Util_Http());
+			$http_util = new Util_Http();
+			$tmet_service = new Extapi_Service_Tmet($sms_channel, $http_util);
 			$tmet_service->interpret_request_statement();
-			$tmet_service->act_on_request_statement();
+			$tmet_service->act_on_request_statement();			
+//>>> do we need gather feedback? OR just display template?? <<<
 			if ($tmet_service->has_feedback()) {
-				$this->payload->feedback = $tmet_service->gather_feedback();
+				$arrivals = $tmet_service->gather_feedback();
+				$this->payload->arrivals = array_get_else($arrivals,'arrivals');
+				$this->payload->transit_stop = array_get_else($arrivals,'transit_stop');
+				$this->payload->query_time = array_get_else($arrivals,'query_time');
+//				$rendered_view = $this->get_rendered_view();
+//				$sms_channel->send_channel_message(array(0=>array('user_name'=>'samkeen','message'=>$rendered_view)),$http_util);
 			} else {
 				$this->viewless();
 			}
-			
 		} else {
 			$this->logger->notice(__METHOD__.' Required components were not found and/or authentcation failed for this request');
 			// don't respond to these requests.
 			$this->viewless();
 		}
-		
-		// authenticate request
-		
-		// interprate request statement
-		
-		// act on request statement
-		
-		// gather feedback
-		
-		
-		
-		
-//		if ($sms_helper->gather_conversation_components_for($this->sms_service,array_map('urldecode',$_REQUEST)) 
-//			&& $user = $sms_helper->authenticate_request(Weave::instance()->sms['service_name'])) {
-//
-//		$sms_helper->parse_statement($user);
-//			if($sms_helper->has_feedback()) {
-//				echo $sms_helper->gather_feedback();
-//			}
-//		} else {
-//			$this->sms_logger->info(__METHOD__.' Required components were not found and/or authentcation failed for this request');
-//		}
-//		die;
 	}
 
 

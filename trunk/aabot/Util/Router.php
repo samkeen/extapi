@@ -58,7 +58,7 @@ class Util_Router {
 			}
 		}
 		// the the requested response type
-		$this->requested_response_type = array_notempty_else($this->requested_url_segments[$index],'sub_designation',CONSTS::$DEFAULT_REQUESTED_RESPONSE_TYPE);
+		$this->requested_response_type = array_notempty_else($this->requested_url_segments[$index],'sub_designation');
 		// set the requested controller
 		if($requested_controller = $this->shift_segment()) {
 			$this->requested_controller['name'] = $requested_controller['value'];

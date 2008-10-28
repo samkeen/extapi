@@ -2,7 +2,10 @@
 abstract class Controller_Base {
 	protected $request_context;
 	protected $request_segments = null;
+	// resp type the user explicitly requested
 	protected $requested_response_type = null;
+	// resp type to fall back to if none explicitly requested 
+	protected $default_response_type = null;
 	protected $request_method = null;
 	protected $logger = null;
 	// the name used for related files in the View directory (matches name in URL).
@@ -23,6 +26,8 @@ abstract class Controller_Base {
 	protected $payload;
 	protected $rendered_template;
 	
+	
+	
 	/**
 	 * Enter description here...
 	 *
@@ -35,7 +40,8 @@ abstract class Controller_Base {
 		
 		$this->request_context = $this->router->request_context();
 		$this->request_segments = $this->request_context['request_segments'];
-		$this->requested_response_type = $this->request_context['requested_response_type'];
+		$this->requested_response_type = array_get_else($this->request_context,'requested_response_type');
+		$this->default_response_type = CONSTS::$RESPONSE_GLOBAL_DEFAULT;
 		$this->request_method = $this->request_context['request_method'];
 		$this->view_dir_name = $this->router->requested_controller_name();
 		$this->payload = new SimpleDTO();
@@ -87,10 +93,15 @@ abstract class Controller_Base {
 		if ($override_action===null) {
 			$this->determine_requested_action();
 		}
+		if ($this->logger->debugEnabled() && $override_action!==null) {
+			$this->logger->debug(__METHOD__.' Action has been set to OVERRIDE VALUE: ['.$override_action.']');
+		}
 		// call the action
 		$this->call_action($override_action);
 		
-		
+		$this->construct_view($override_template);
+	}
+	public function construct_view($override_template = null, $return_view_as_string = false) {
 		if ($override_template===null && $this->use_template) {
 			$this->set_template_for_action();
 		} else {
@@ -110,15 +121,11 @@ abstract class Controller_Base {
 		if ($this->logger->debugEnabled() && $override_template!==null) {
 			$this->logger->debug(__METHOD__.' Template has been set to OVERRIDE VALUE: ['.$override_template.']');
 		}
-		if ($this->logger->debugEnabled() && $override_action!==null) {
-			$this->logger->debug(__METHOD__.' Action has been set to OVERRIDE VALUE: ['.$override_action.']');
-		}
-		
 		
 		$this->set_layout();
-		$this->render_view();
-		
+		return $this->render_view($return_view_as_string);
 	}
+	
 	/**
 	 * each controller must define its own default action
 	 */
@@ -153,7 +160,10 @@ abstract class Controller_Base {
 	 * render the template first and bring any variables defined in it into then
 	 * namespace of the layout when it is rendered (if thier is a layout to render.
 	 */
-	protected function render_view() {
+	protected function render_view($return_as_string=false) {
+		if($return_as_string) {
+			ob_start(null,null,true);
+		}
 		if ($this->use_template) {
 			$this->digest_template();
 		}
@@ -162,6 +172,17 @@ abstract class Controller_Base {
 			$payload = $this->payload;
 			include($this->layout_file);
 		}
+		if($return_as_string) {
+			$rendered_view = ob_get_contents();
+			ob_end_clean();
+			return $rendered_view;
+		}
+	}
+	/**
+	 * Allow the controller to grab the view as a string.
+	 */
+	public function get_rendered_view($override_template = null) {
+		return $this->construct_view($override_template, true);
 	}
 	protected function add_debug_message($message, $escape_html = true) {
 		$this->debug_messages[] = $escape_html ? htmlentities($message, ENT_QUOTES, 'UTF-8') : $message;
@@ -287,6 +308,9 @@ abstract class Controller_Base {
 					: $lib_layout_dir . CONSTS::$DEFAULT_LAYOUT.'.php';
 			}
 		}
+	}
+	public function get_response_type() {
+		return $this->requested_response_type!==null ? $this->requested_response_type : $this->default_response_type;
 	}
 }
 ?>

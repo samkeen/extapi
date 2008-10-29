@@ -13,5 +13,5 @@
 	$short_sign = str_ireplace('portland','Prtlnd',$short_sign);
 	$short_sign = str_ireplace('beaverton','Beavrtn',$short_sign);
 ?>
-<?php echo($short_sign . $arrival_time_txt) ?><?php echo($arrival['detour']=='true' ? ':detour on route' : '') ?><br />
+<?php echo($short_sign . $arrival_time_txt) ?><?php echo($arrival['detour']=='true' ? ":detour on route\n" : "\n") ?>
 <?php } ?>

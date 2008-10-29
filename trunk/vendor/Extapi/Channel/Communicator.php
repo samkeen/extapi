@@ -25,7 +25,7 @@ abstract class Extapi_Channel_Communicator {
 		$this->load_config('channels', 'sms', $requesting_channel_name);
 	}
 	public function config() {
-		return array_get_else($this->config);
+		return $this->config;
 	}
 	public function communicator() {
 		$this->specific_communicator;

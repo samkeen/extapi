@@ -87,7 +87,6 @@ class Util_Http {
         foreach ($this->options as $option => $value) {
             curl_setopt($this->handle, constant('CURLOPT_'.str_replace('CURLOPT_', '', strtoupper($option))), $value);
         }
-        
         $response = curl_exec($this->handle);
         if ( ! $response) {
             $this->error = curl_errno($this->handle).' - '.curl_error($this->handle);

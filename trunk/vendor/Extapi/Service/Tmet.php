@@ -11,10 +11,10 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 	/**
 	 * 
 	 */
-	function __construct(Extapi_Channel_Communicator $channel, Util_Http $http_util) {
+	function __construct(Extapi_Channel_Communicator $channel) {
 		parent::__construct($channel);
 		$this->load_config('services','tmet');
-		$this->http_util = $http_util;
+		$this->http_util = new Util_Http();
 	}
 
 	/**

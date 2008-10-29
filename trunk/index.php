@@ -1,10 +1,4 @@
 <?php
-$todo = <<<JJJ
-complete VendorFactory @see register_action()<br/>
-refactor \$logger-&gt; to ENV::\$log-&gt;
-JJJ;
-//die($todo);
-
 require 'app/bootstrap.php';
 $logger = new Logger(Logger::DEBUG,dirname(__FILE__).'/extapi.log');
 ENV::$log=$logger;

@@ -1,4 +1,13 @@
 <?php
+/**
+ * This is a Example Controller that demonstrates the features of 
+ * an Aabot Controller
+ * 
+ * Note, nothing should be scoped more open than protected.  
+ *  - protected for anthing to be exposed through a URI
+ *  - private for any internal used methods
+ *
+ */
 class Controller_Example extends Controller_Base {
 	
 	protected function init() {
@@ -53,5 +62,14 @@ class Controller_Example extends Controller_Base {
 //		$this->use_template = false;
 		$this->payload->message = "<p>This action (".__FUNCTION__.") does not use a layout<p><p>It can be called by .../example/no_layout OR .../example/no-layout</p>";
 	}
-	
+	/*
+	 * you can grab the view within the controller.
+	 */
+	protected function get_rendered_view_action() {
+		$this->viewless();
+		$this->payload->message = "This is the action you get (".__FUNCTION__.") if no action is called";
+		$this->payload->response_type = $this->get_response_type();
+		$rendered_view = $this->get_rendered_view();
+		echo $rendered_view;
+	}
 }

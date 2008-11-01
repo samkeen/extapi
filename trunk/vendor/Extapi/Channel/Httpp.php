@@ -60,7 +60,7 @@ class Extapi_Channel_Httpp extends Extapi_Channel_Communicator {
 			$this->config_get('api_host_name'), 
 			$this->config_get('api_uri_port'), 
 			$this->config_get('api_username'), 
-			$this->config_get('api_password'), 
+			$this->channel_account_password, 
 			'extapi', 
 			$this->config_get('api_domain_name'), 
 			$printlog=false, 
@@ -71,7 +71,7 @@ class Extapi_Channel_Httpp extends Extapi_Channel_Communicator {
 		    $conn->processUntil('session_start');
 		    $conn->presence();
 		    foreach ($channel_recipients as $recipient) {
-		    	$conn->message(array_get_else($recipient,'user_name'), array_get_else($recipient,'message'));
+		    	$conn->message(array_get_else($recipient,'user_name'), array_get_else($recipient,'message'),'chat',null,null,$this->mapped_channel_communication_fields['channel_short_code']);
 		    	ENV::$log->debug(__METHOD__."send user [".array_get_else($recipient,'user_name')."] message via XMPP :\n".array_get_else($recipient,'message'));
 		    }
 		    $conn->disconnect();

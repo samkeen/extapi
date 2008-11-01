@@ -43,8 +43,10 @@ final class ENV {
 	public static final function load_vendor_file($vendor_package_name) {
 		$success = false;
 		global $PATH__VENDOR_ROOT;
-		if (file_exists($PATH__VENDOR_ROOT.'/'.$vendor_package_name.'.php')) {
-			require $PATH__VENDOR_ROOT.'/'.$vendor_package_name.'.php';
+		$path_to_file = $PATH__VENDOR_ROOT.'/'.$vendor_package_name. (preg_match('/\.php$/i',$vendor_package_name)?'':'.php');
+		if (file_exists($path_to_file)) {
+			ini_set('include_path',ini_get('include_path').PATH_SEPARATOR.dirname($path_to_file));
+			require $path_to_file;
 			$success = true;
 		}
 		return $success;

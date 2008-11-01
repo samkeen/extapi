@@ -13,14 +13,14 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Communicator {
 	 */
 	public function authenticate_request() {
 		$authenticated = false;
-		// authenticate the request is from Zeep
 		$authenticated = 
-			$this->config_get('channel_short_code') == array_get_else($this->mapped_channel_communication_fields,'channel_short_code');
-		// authenticate the user making the request
-		$authenticated = 
-			array_get_else($this->mapped_channel_communication_fields,'sms_user_id') == 'samkeen'
+			// authenticate the request is from Zeep
+			$this->config_get('channel_short_code') == array_get_else($this->mapped_channel_communication_fields,'channel_short_code')
 			&&
-			array_get_else($this->mapped_channel_communication_fields,'sms_user_number') == '15034733242';
+			// authenticate the user making the request
+			array_get_else($this->mapped_channel_communication_fields,'channel_user_id') == 'samkeen'
+			&&
+			array_get_else($this->mapped_channel_communication_fields,'channel_user_number') == '15034733242';
 		return $authenticated;
 	}
 	
@@ -44,7 +44,7 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Communicator {
 	/**
 	 * build the security http header for a given sms service
 	 */
-	public static function generate_authorization_headers($service_name,$api_key, $signing_key, $message_parameters_string ) {
+	private static function generate_authorization_headers($service_name,$api_key, $signing_key, $message_parameters_string ) {
 		$authorization_header = null;
 		switch($service_name) {
 			case 'zeep':

@@ -15,12 +15,12 @@ class Controller_Pdxt extends Controller_Base {
 			break;
 			
 			default:
-				;
+				// bypass the action template for the controller template
+				$this->set_template('pdxt.php');
+				$this->payload->message = "passed through the SMS action";
 			break;
 		}
-		// bypass the action template for the controller template
-		$this->set_template('pdxt.php');
-		$this->payload->message = "passed through the SMS action";
+		
 	}
 	protected function xmpp_action() {
 		switch ($this->next_request_segment_value()) {
@@ -29,12 +29,12 @@ class Controller_Pdxt extends Controller_Base {
 			break;
 			
 			default:
-				;
+				// bypass the action template for the controller template
+				$this->set_template('pdxt.php');
+				$this->payload->message = "passed through the XMPP action";
 			break;
 		}
-		// bypass the action template for the controller template
-		$this->set_template('pdxt.php');
-		$this->payload->message = "passed through the XMPP action";
+		
 	}
 	protected function register_action() {
 		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/zeep');
@@ -96,24 +96,39 @@ class Controller_Pdxt extends Controller_Base {
 			$this->viewless();
 		}
 	}
-	
+/*
+ *     
+ *  [from] => sam@shizzow.com/Sams-MacBookPro
+    [to] => extapi@httpp.extapi.com
+    [message] => yoyo
+    [id] => purple2145455a
+    [subject] => 
+    [thread] => 
+    [type] => chat
+
+extapi.com/pdxt/xmpp/receiver/httpp.xml?from=sam%40shizzow.com&to=extapi%40httpp.extapi.com&message=12772&id=purple2145455a&subject=&thread=&type=chat
+ */	
 	private function xmpp_receiver() {
-		ENV::$log->debug(print_r($_REQUEST,1));die;
+		
+//		ENV::$log->debug(print_r($_REQUEST,1));die;
 		$this->use_layout = false;
 		$requesting_channel = $this->next_request_segment_value();
-		header('Content-type: text/plain',true);
+//		header('Content-type: text/plain',true);
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
-		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
-		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
+		$xmpp_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
+		
+		if ($xmpp_channel->collect_request_params() && $xmpp_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
-			$tmet_service = new Extapi_Service_Tmet($sms_channel);
+			$tmet_service = new Extapi_Service_Tmet($xmpp_channel);
 			$tmet_service->interpret_request_statement();
-			$tmet_service->act_on_request_statement();			
-			if ($tmet_service->has_feedback()) {
+			$tmet_service->act_on_request_statement();
+			if ($tmet_service->has_feedback()) {	
 				$arrivals = $tmet_service->gather_feedback();
 				$this->payload->arrivals = array_get_else($arrivals,'arrivals');
 				$this->payload->transit_stop = array_get_else($arrivals,'transit_stop');
 				$this->payload->query_time = array_get_else($arrivals,'query_time');
+				$xmpp_channel->send_channel_message($this->get_rendered_view());
+				$this->viewless();
 			} else {
 				$this->viewless();
 			}

@@ -11,6 +11,12 @@ class Util_Router {
 	private $requested_response_type;
 
 	private $custom_routes;
+	
+	private static $request_parameters = array();
+	
+	private $strip_from_request = array(self::REDIRECT_VAR=>null);
+	
+	private static $debug_requested = false;
 
 	
 	const PATH_SEPARATOR = '/';
@@ -38,14 +44,17 @@ class Util_Router {
 	}
 	
 	public static function request_params() {
-		$strip_from_request = array(self::REDIRECT_VAR=>null);
-		return array_diff_key($_REQUEST,$strip_from_request);
-//		return array_map('urldecode',array_diff_key($_REQUEST,$strip_from_request));
+		return self::$request_parameters;
+	}
+	public static function debug_requested() {
+		return self::$debug_requested;
 	}
 	private function shift_segment() {
 		return isset($this->requested_url_segments[0])?array_shift($this->requested_url_segments):false;
 	}
 	private function process_request() {
+		self::$request_parameters = array_diff_key($_REQUEST,$this->strip_from_request);
+		self::$debug_requested = isset(self::$request_parameters['debug']);
 		$request_segments = explode(self::PATH_SEPARATOR, $this->reconciled_requested_url);
 		foreach ($request_segments as $index => $request_segment) {
 			$dot_index = stripos($request_segment,'.');
@@ -64,6 +73,7 @@ class Util_Router {
 			$this->requested_controller['name'] = $requested_controller['value'];
 			$this->requested_controller['sub_designation'] = $requested_controller['sub_designation'];
 		}
+		
 	}
 	private function reconcile_requested_url() {
 		return isset($this->custom_routes['/'.$this->original_requested_url]) 

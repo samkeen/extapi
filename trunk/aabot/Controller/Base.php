@@ -141,18 +141,12 @@ abstract class Controller_Base {
 	 * @param string $relative_path The relative path (from the View dir) to the template file
 	 */	
 	protected function set_template($relative_path) {
-		$relative_path = ltrim($relative_path,'/');
 		$file_path = null;
-		if (file_exists(ENV::PATH('TEMPLATE_DIR','/'.$relative_path))) {
-			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.ENV::PATH('TEMPLATE_DIR','/'.$relative_path));
-			$this->template_file = ENV::PATH('TEMPLATE_DIR','/'.$relative_path);
-		} else if (file_exists(ENV::PATH('LIB_TEMPLATE_DIR','/'.$relative_path))) {
-			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.ENV::PATH('LIB_TEMPLATE_DIR','/'.$relative_path));
-			$this->template_file = ENV::PATH('LIB_TEMPLATE_DIR','/'.$relative_path);
+		if ($this->template_file = ENV::get_template_path($relative_path)) {
+			$this->logger->debug(__METHOD__.' Explicitly setting template file to :'.$this->template_file);
 		} else {
 			$this->logger->debug(__METHOD__.'  Attempted to Explicitly set template file to : ['
 				.ENV::PATH('TEMPLATE_DIR','/'.$relative_path). '] But file did not exist.');
-			$this->template_file = ENV::PATH('TEMPLATE_DIR','/'.$relative_path);
 		}
 	}
 	
@@ -171,6 +165,9 @@ abstract class Controller_Base {
 			// set a short name ref to $this->payload for ease of use in the view.
 			$payload = $this->payload;
 			include($this->layout_file);
+		}
+		if (ENV::debug_active() && Util_Router::debug_requested()) {
+			include(ENV::get_template_path('blocks/debug'));
 		}
 		if($return_as_string) {
 			$rendered_view = ob_get_contents();
@@ -272,7 +269,7 @@ abstract class Controller_Base {
 			}
 			$possible_template_file = $template_path.implode('/',$segments).".php";
 			$this->logger->debug(__METHOD__.' trying template match for: '.$possible_template_file);
-			if ($deepest_template_file_path = ENV::PATH_TO_TEMPLATE_FILE($possible_template_file)) {
+			if ($deepest_template_file_path = ENV::get_template_path($possible_template_file)) {
 				$this->logger->debug(__METHOD__.' Found deepest template file match: '.$possible_template_file);
 				break;
 			}
@@ -280,14 +277,14 @@ abstract class Controller_Base {
 		// look for a template for the action
 		if ( ! $deepest_template_file_path) {
 			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php');
-			if ($deepest_template_file_path = ENV::PATH_TO_TEMPLATE_FILE($this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php') ) {
+			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php') ) {
 				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php');
 			}
 		}
 		// finally look for a template for the contoller
 		if ( ! $deepest_template_file_path) {
 			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
-			if ($deepest_template_file_path = ENV::PATH_TO_TEMPLATE_FILE($this->view_dir_name.'.php')) {
+			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'.php')) {
 				$this->logger->debug(__METHOD__.' Found deepest template file match[controller]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
 			}
 		}

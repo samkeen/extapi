@@ -6,13 +6,21 @@ final class ENV {
 	public static final function load_vendor_file($vendor_package_name) {
 		$success = false;
 		global $PATH__VENDOR_ROOT;
-		$path_to_file = $PATH__VENDOR_ROOT.'/'.$vendor_package_name. (preg_match('/\.php$/i',$vendor_package_name)?'':'.php');
+		$path_to_file = $PATH__VENDOR_ROOT.'/'.self::normalize_file_name($vendor_package_name);
 		if (file_exists($path_to_file)) {
 			ini_set('include_path',ini_get('include_path').PATH_SEPARATOR.dirname($path_to_file));
 			require $path_to_file;
 			$success = true;
 		}
 		return $success;
+	}
+	/**
+	 * all config files return an array called $config
+	 */
+	public static function load_config_file($config_file_name) {
+		global $PATH__APP_ROOT;		
+		include $PATH__APP_ROOT.'/config/'.self::normalize_file_name($config_file_name);
+		return isset($config)?null:$config;
 	}
 	
 	public static final function PATH($path, $append=null) {
@@ -92,6 +100,16 @@ final class ENV {
 		}
 		return $name;
 		
+	}
+	/**
+	 * filename will leave this method with NO leading slash and the correct 
+	 * file extension.
+	 * ex: given '/db_config'  will return 'db_config.php'
+	 */
+	private function normalize_file_name($file_name, $ext_it_should_have='php') {
+		$file_name = trim($file_name,' /');
+		$ext_it_should_have = trim($ext_it_should_have,' .');
+		return $file_name.(preg_match('/\.'.$ext_it_should_have.'$/i',$file_name)?'':'.'.$ext_it_should_have);
 	}
 }
 ?>

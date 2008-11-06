@@ -19,6 +19,8 @@ class Logger {
 		self::WARN => "WARN",
 		self::ERROR => "ERROR"
 	);
+	private $maintain_buffer_of_statements;
+	private $buffered_statements = array();
 	/*
 	 * hold the optional full path to the log file.  If not defined, we log to 
 	 * the PHP defined system log using error_log();
@@ -30,9 +32,10 @@ class Logger {
 	 * log statments to that file, if not given we will write to the 
 	 * system log
 	 */
-	public function __construct($log_level, $log_file_path=null) {
+	public function __construct($log_level, $log_file_path=null, $maintain_buffer_of_statements=false) {
 		$this->log_file_path = $log_file_path;
 		$this->log_level = $log_level;
+		$this->maintain_buffer_of_statements = $maintain_buffer_of_statements;
 	}
 	/**
 	 * @return boolean Tells you if the Debug level is turned on. Used
@@ -77,6 +80,9 @@ class Logger {
 			$this->logMessage($log_message,self::ERROR);
 		}
 	}
+	public function buffered_statements() {
+		return $this->buffered_statements;
+	}
 	/**
 	 * log message if we are set at or above the $log_level supplied
 	 */
@@ -87,6 +93,10 @@ class Logger {
 		} else {
 			$this->writeFileMessage($message);
 		}
+		if ($this->maintain_buffer_of_statements) {
+			$this->buffered_statements[] = $message;
+		}
+		
 	}
 	private function writeSystemMessage($log_message) {
 		error_log($log_message);

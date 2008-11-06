@@ -18,9 +18,9 @@ class Controller_Pdxt extends Controller_Base {
 				// bypass the action template for the controller template
 				$this->set_template('pdxt.php');
 				$this->payload->message = "passed through the SMS action";
+				
 			break;
 		}
-		
 	}
 	protected function xmpp_action() {
 		switch ($this->next_request_segment_value()) {
@@ -128,7 +128,7 @@ extapi.com/pdxt/xmpp/receiver/httpp.xml?from=sam%40shizzow.com&to=extapi%40httpp
 				$this->payload->transit_stop = array_get_else($arrivals,'transit_stop');
 				$this->payload->query_time = array_get_else($arrivals,'query_time');
 				// let render to browser if html requested (.html)
-				if( ! $this->requested_response_type==CONSTS::$RESPONSE_HTML) {
+				if($this->requested_response_type != CONSTS::$RESPONSE_HTML) {
 					$xmpp_channel->send_channel_message($this->get_rendered_view());
 					$this->viewless();
 				}

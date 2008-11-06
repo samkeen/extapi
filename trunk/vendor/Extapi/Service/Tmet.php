@@ -67,7 +67,7 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 		if ($transit_service_resp) {
 			$resp_xml_obj = null;
 			try {
-				$resp_xml_obj = new SimpleXMLElement($transit_service_resp);
+				$resp_xml_obj = @new SimpleXMLElement($transit_service_resp);
 				$parsed_response['query_time'] = isset($resp_xml_obj['queryTime'])?(double)$resp_xml_obj['queryTime']:time();
 				$location = $this->get_attributes_for_node($resp_xml_obj->location);
 				if ($location) {

@@ -22,31 +22,50 @@ abstract class Model_Base {
 		$this->db_handle = $db_handle;
 		
 	}
+	/**
+	 * 
+	 * @param array $field_values {optional, we could have set the 
+	 * various field values on the model prior to calling this method
+	 */
 	protected function save(array $field_values = null) {
-		$insert_statement_table = $this->model_name.'(';
-		$insert_statement_values = '(';
 		if ($field_values) {
 			// do intersect to delete any $field_values not present in $this->field_names;
-			
-			
-//			// prepare the statement
-//			$stmt = $pdo->prepare($sql);
-//			
-//			// bind php variables to the placeholders in the statement
-//			$stmt->bindParam(':n', $name);
-//			$stmt->bindParam(':a', $age);
-//			$stmt->bindParam(':s', $sex);
-//			$stmt->bindParam(':l', $location);
-			# // insert one row  
-			# $name = 'Christer';  
-			# $age = 26;  
-			# $sex = 'm';  
-			# $location = 'norway';  
-			#   
-			# // execute the statement  
-			# $stmt->execute();
+			$field_values = array_intersect_key($field_values, $this->field_names);
+			$insert_statement = 
+				'INSERT INTO '.$this->model_name.'( `'.implode('`,`',array_keys($field_values)).'` )'
+				.' VALUES ( :'.implode(',:',array_keys($field_values)).' )';
+			try {
+				$statement = $this->db_handle->prepare($insert_statement);
+				foreach ($field_values as $field_name => $field_value) {
+					 $statement->bindParam(':'.$field_name, $field_value);
+				}
+				$statement->execute();
+			} catch (Exception $e) {
+				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+			}
 		}
-		
+	}
+	/**
+	 * 
+	 * @param array $field_values {optional, we could have set the 
+	 * various field values on the model prior to calling this method
+	 */
+	protected function find(array $field_values = null) {
+		if ($field_values) {
+			// do intersect to delete any $field_values not present in $this->field_names;
+			$field_values = array_intersect_key($field_values, $this->field_names);
+			$find_statement = 
+				'SELECT '.implode(', ',array_keys($field_values)).' FROM '.$this->model_name.' WHERE ';
+			try {
+				$statement = $this->db_handle->prepare($find_statement);
+				foreach ($field_values as $field_name => $field_value) {
+					 $statement->bindParam(':'.$field_name, $field_value);
+				}
+				$statement->execute();
+			} catch (Exception $e) {
+				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+			}
+		}
 	}
 	protected function query($sql) {
 		return $this->db_handle->query($sql);

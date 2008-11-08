@@ -1,12 +1,18 @@
 <?php
-class Controller_Register extends Controller_Base {
+class Controller_Users extends Controller_Base {
 	
 	protected function init() {
 		$this->default_response_type = CONSTS::$RESPONSE_HTML;
 	}
+	/**
+	 * show list of users
+	 */
 	protected function default_action() {
-
+		$user = new Model_User();
+		$user->set('active',true);
+		$this->payload->users = $user->find();
 	}
+	
 	protected function add_action() {
 		if ($this->received_data) {
 			$user = new Model_User($this->received_data);

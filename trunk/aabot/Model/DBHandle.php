@@ -1,6 +1,6 @@
 <?php
 
-class Model_DB_Handle {
+class Model_DBHandle {
 	private $hostname;
 	private $database;
 	private $username;
@@ -37,6 +37,9 @@ class Model_DB_Handle {
 			ENV::$log->error(__METHOD__.$e->getMessage());
 		}
 		return $count;
+	}
+	public function prepare($statement_text) {
+		return $this->db_handle->prepare($statement_text);
 	}
 	private function connect() {
 		try {

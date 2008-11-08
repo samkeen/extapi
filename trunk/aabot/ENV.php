@@ -20,7 +20,7 @@ final class ENV {
 	public static function load_config_file($config_file_name) {
 		global $PATH__APP_ROOT;		
 		include $PATH__APP_ROOT.'/config/'.self::normalize_file_name($config_file_name);
-		return isset($config)?null:$config;
+		return isset($config)?$config:null;
 	}
 	
 	public static final function PATH($path, $append=null) {
@@ -106,7 +106,7 @@ final class ENV {
 	 * file extension.
 	 * ex: given '/db_config'  will return 'db_config.php'
 	 */
-	private function normalize_file_name($file_name, $ext_it_should_have='php') {
+	private static function normalize_file_name($file_name, $ext_it_should_have='php') {
 		$file_name = trim($file_name,' /');
 		$ext_it_should_have = trim($ext_it_should_have,' .');
 		return $file_name.(preg_match('/\.'.$ext_it_should_have.'$/i',$file_name)?'':'.'.$ext_it_should_have);

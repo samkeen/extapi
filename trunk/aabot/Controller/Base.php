@@ -14,6 +14,11 @@ abstract class Controller_Base {
 	protected $router;
 	protected $requested_action = null;
 	
+	protected $model_name;
+	
+	public $recieved_form_data = false;
+	public $form_data = array();
+	
 	// these are ment to be overridden in Controllers
 	protected $use_template = true;
 	protected $use_layout = true;
@@ -43,7 +48,11 @@ abstract class Controller_Base {
 		$this->requested_response_type = array_get_else($this->request_context,'requested_response_type');
 		$this->default_response_type = CONSTS::$RESPONSE_GLOBAL_DEFAULT;
 		$this->request_method = $this->request_context['request_method'];
+		$this->process_recieved_data();
+		
 		$this->view_dir_name = $this->router->requested_controller_name();
+		$this->set_model_name();
+		
 		$this->payload = new SimpleDTO();
 		$this->init();
 	}
@@ -80,7 +89,28 @@ abstract class Controller_Base {
 		$this->logger->debug(__METHOD__.' Calling base controller internal File Not Found Action');
 		$this->payload->message = "You've requested an unknown resource";
 	}
-	
+	protected function redirect($path, $die_afterwards = true) {
+		header('Location: '.$path);
+		if ($die_afterwards) {
+			die();
+		}
+	}
+	/**
+	 * get field value for use in a html form.
+	 */
+	protected function form_get($field_name, $echo=true) {
+		$value = '';
+		if(isset($this->form_data[$this->model_name][$field_name])) {
+			$value = $this->form_data[$this->model_name][$field_name];
+		} else if ($this->payload->{$this->model_name}!==null) {
+			$value = array_get_else($this->payload->{$this->model_name},$field_name);
+		}
+		if ($echo) {
+			echo $value;
+		} else {
+			return $value;
+		}
+	}
 	/**
 	 * main driver method for a controller
 	 * 
@@ -217,7 +247,9 @@ abstract class Controller_Base {
 			$this->logger->debug(__METHOD__.' Not using Layout (layout_path was found to be [null])');
 		}
 	}
-	
+	private function set_model_name() {
+		$this->model_name = strtolower(preg_replace('/s$/i','',$this->view_dir_name));
+	}
 	private function call_action($action=null) {
 		$the_action = $action!==null?$action:$this->requested_action;
 		$this->logger->debug(__METHOD__.' Invoking Action [' . $the_action .'] ');
@@ -304,6 +336,15 @@ abstract class Controller_Base {
 					? $layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php'
 					: $lib_layout_dir . CONSTS::$DEFAULT_LAYOUT.'.php';
 			}
+		}
+	}
+	/**
+	 * @todo include form tokens
+	 */
+	private function process_recieved_data() {
+		if (count($_POST) && isset($_POST['__method'])) {
+			$this->recieved_form_data = true;
+			$this->form_data = $_POST;
 		}
 	}
 	public function get_response_type() {

@@ -46,6 +46,9 @@ function array_notempty_else(array $array, $key, $val_if_not_found=null) {
 function array_get_else($array, $key, $val_if_not_found=null) {
 	return is_array($array) && isset($array[$key]) ? $array[$key] : $val_if_not_found;
 }
+function get($array, $key, $val_if_not_found=null) {
+	return array_get_else($array, $key, $val_if_not_found);
+}
 /**
  * Echo the HTML escaped version of the string
  *

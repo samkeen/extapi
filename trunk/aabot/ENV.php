@@ -89,7 +89,7 @@ final class ENV {
 		}
 		return $full_path_to_file;
 	}
-	private static final function classifyName($name) {
+	public static final function classifyName($name) {
 		$name = strtolower($name);
 		if (strstr($name,'_')) {
 			$name = explode('_',$name);

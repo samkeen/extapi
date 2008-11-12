@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * Base class for all services
+ * Provides base utility methods and defines the interface of
+ * - interpret_request_statement()
+ * - act_on_request_statement()
+ * - gather_feedback()
+ * 
+ *
+ * @package			extapi
+ * @subpackage		service
+ */
 abstract class Extapi_Service_Base {
 	
 	protected $channel;
@@ -21,7 +31,7 @@ abstract class Extapi_Service_Base {
 	}
 	
 	/**
-	 * @todo pull this out to a util class (Channel_Base has the same method); 
+	 * @todo pull this out to a util class (Channel_Base has the same method); CANCEL: MOVING TO DB SO WONT Matter 
 	 */
 	protected function load_config($file, $section=null) {
 		$config_folder =  dirname(dirname(__FILE__)).'/config/';

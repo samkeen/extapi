@@ -1,13 +1,12 @@
 <?php
-
+// @todo determine why were're needing a require onece and why not looking in .
 require_once (dirname(__FILE__).'/Base.php');
 
 class Extapi_Service_Tmet extends Extapi_Service_Base {
 	
 	private $stop_id = null;
 	private $vehicle_id = null;
-	
-	
+
 	/**
 	 * 
 	 */
@@ -60,7 +59,11 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 		return $transit_service_resp; // array('stop_info'=>..., 'transit_arrivals_data' => ...)
 	}
 
-	
+	/**
+	 * @todo refactor tmet::parse_response. verify that we are getting all the usefull info
+	 * - consider a generalized xml parser: send it an array structure of values we are expecting and
+	 * have it reture the structure populated
+	 */
 	private function parse_response($transit_service_resp) {
 		global $logger;
 		$parsed_response = null;

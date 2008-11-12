@@ -14,7 +14,7 @@ class Extapi_Channel_Httpp extends Extapi_Channel_Communicator {
 	public function authenticate_request() {
 		$authenticated = false;
 		$authenticated = 
-			array_get_else($this->mapped_channel_communication_fields,'channel_user_id') == 'sam@shizzow.com';
+			array_get_else($this->mapped_channel_communication_fields,'channel_user_id') == 'sam.sjk@gmail.com';
 		return $authenticated;
 	}
 	

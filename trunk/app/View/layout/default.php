@@ -7,6 +7,15 @@
 	<link rel="stylesheet" href="/static/base.css" type="text/css" />
 </head>
 <body>
+<div id="page-header">
+<h1>Extapi</h1>
+</div>
+<div id="body-content">
 <?php echo $this->rendered_template; ?>
+</div>
+<div id="page-footer">
+
+</div>
+
 </body>
 </html>

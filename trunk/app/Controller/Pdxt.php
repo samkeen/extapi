@@ -18,7 +18,6 @@ class Controller_Pdxt extends Controller_Base {
 				// bypass the action template for the controller template
 				$this->set_template('pdxt.php');
 				$this->payload->message = "passed through the SMS action";
-				
 			break;
 		}
 	}
@@ -77,7 +76,7 @@ class Controller_Pdxt extends Controller_Base {
 		header('Content-type: text/plain',true);
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
 		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
-		if ($sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
+		if ($sms_channel && $sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
 			$tmet_service = new Extapi_Service_Tmet($sms_channel);
 			$tmet_service->interpret_request_statement();
@@ -91,33 +90,35 @@ class Controller_Pdxt extends Controller_Base {
 				$this->viewless();
 			}
 		} else {
-			ENV::$log->notice(__METHOD__.' Required components were not found and/or authentcation failed for this request');
+		if (! $sms_channel) {
+				ENV::$log->error(__METHOD__.' Util_VendorFactory::get_instance failed for [extapi/channel/'.$requesting_channel.']');
+			} else {
+				ENV::$log->notice(__METHOD__.' Required components were not found and/or authentcation failed for this request');
+			}
 			// don't respond to these requests.
 			$this->viewless();
 		}
 	}
 /*
  *     
- *  [from] => sam@shizzow.com/Sams-MacBookPro
-    [to] => extapi@httpp.extapi.com
-    [message] => yoyo
-    [id] => purple2145455a
+ *  [from] => sam.sjk@gmail.com
+    [from_resource] => AdiumA3314218
+    [to] => pdxtt@extapi.com
+    [message] => 1419
+    [id] => purple6abd8054
     [subject] => 
     [thread] => 
     [type] => chat
 
-extapi.com/pdxt/xmpp/receiver/httpp.xml?from=sam%40shizzow.com&to=extapi%40httpp.extapi.com&message=12772&id=purple2145455a&subject=&thread=&type=chat
+extapi.com/pdxt/xmpp/receiver/httpp.xml?from=samkeen%40jabber.org&to=pdxtt%40extapi.com&message=1419&id=purple2145455a&subject=&thread=&type=chat
  */	
 	private function xmpp_receiver() {
-		
-//		ENV::$log->debug(print_r($_REQUEST,1));die;
 		$this->use_layout = false;
 		$requesting_channel = $this->next_request_segment_value();
-//		header('Content-type: text/plain',true);
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
 		$xmpp_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
 		
-		if ($xmpp_channel->collect_request_params() && $xmpp_channel->authenticate_request()) {
+		if ($xmpp_channel && $xmpp_channel->collect_request_params() && $xmpp_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
 			$tmet_service = new Extapi_Service_Tmet($xmpp_channel);
 			$tmet_service->interpret_request_statement();
@@ -136,13 +137,14 @@ extapi.com/pdxt/xmpp/receiver/httpp.xml?from=sam%40shizzow.com&to=extapi%40httpp
 				$this->viewless();
 			}
 		} else {
-			ENV::$log->notice(__METHOD__.' Required components were not found and/or authentcation failed for this request');
+			if (! $xmpp_channel) {
+				ENV::$log->error(__METHOD__.' Util_VendorFactory::get_instance failed for [extapi/channel/'.$requesting_channel.']');
+			} else {
+				ENV::$log->notice(__METHOD__.' Required components were not found and/or authentcation failed for this request');
+			}
 			// don't respond to these requests.
 			$this->viewless();
 		}
 	}
-	
-	
-
 
 }

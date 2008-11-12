@@ -117,7 +117,7 @@ See othr cmd\'s @ shizzow.com/sms';
 				$was_successful = isset($this->sms_conversation_fields['text']) && isset($this->sms_conversation_fields['sms_user_id']);
 			}
 		}
-		if ($this->logger->debugEnabled()) {
+		if ($this->logger->debug()) {
 			$this->logger->debug(__METHOD__.' Found conversation components for service:['.$sms_service.']'.print_r($this->sms_conversation_fields,1));
 		}
 		return $was_successful;

@@ -10,7 +10,5 @@ class Model_User extends Model_Base {
 	);
 	public function __construct() {
 		parent::__construct(__CLASS__);
-	}
-	
+	}	
 }
-?>

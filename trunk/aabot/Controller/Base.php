@@ -123,7 +123,7 @@ abstract class Controller_Base {
 		if ($override_action===null) {
 			$this->determine_requested_action();
 		}
-		if ($this->logger->debugEnabled() && $override_action!==null) {
+		if ($this->logger->debug() && $override_action!==null) {
 			$this->logger->debug(__METHOD__.' Action has been set to OVERRIDE VALUE: ['.$override_action.']');
 		}
 		// call the action
@@ -148,7 +148,7 @@ abstract class Controller_Base {
 		}
 		
 		
-		if ($this->logger->debugEnabled() && $override_template!==null) {
+		if ($this->logger->debug() && $override_template!==null) {
 			$this->logger->debug(__METHOD__.' Template has been set to OVERRIDE VALUE: ['.$override_template.']');
 		}
 		
@@ -263,7 +263,7 @@ abstract class Controller_Base {
 			array_shift($this->request_segments);
 			$this->logger->debug(__METHOD__.'  Action was found to be: '.$this->requested_action);	
 		} else { // use the default action
-			if ($this->logger->debugEnabled()) {
+			if ($this->logger->debug()) {
 				if (isset($this->request_segments[0])) {
 					$this->requested_action = CONSTS::$DEFAULT_ACTION;
 					$this->logger->debug(__METHOD__.'  Did not find requested Action['.$possible_action.'] Sending to File not found');	

@@ -110,7 +110,7 @@ class Controller_Pdxt extends Controller_Base {
     [thread] => 
     [type] => chat
 
-extapi.com/pdxt/xmpp/receiver/httpp.xml?from=samkeen%40jabber.org&to=pdxtt%40extapi.com&message=1419&id=purple2145455a&subject=&thread=&type=chat
+extapi.com/pdxt/xmpp/receiver/x2http.xml?from=sam.sjk%40gmail.com&to=pdxtt%40extapi.com&message=1419&id=purple2145455a&subject=&thread=&type=chat
  */	
 	private function xmpp_receiver() {
 		$this->use_layout = false;

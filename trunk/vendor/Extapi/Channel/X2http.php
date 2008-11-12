@@ -1,6 +1,6 @@
 <?php
 require 'Communicator.php';
-class Extapi_Channel_Httpp extends Extapi_Channel_Communicator {
+class Extapi_Channel_X2http extends Extapi_Channel_Communicator {
 	
 	public function __construct($requesting_channel_name, array $request, Logger $logger) {
 		parent::__construct($requesting_channel_name, $request, $logger);

@@ -1,22 +1,41 @@
 <?php
+/**
+ * Base class for all channels
+ * Provides base utility methods and defines the interface of
+ * - collect_request_params()
+ * - authenticate_request()
+ * 
+ *
+ * @package			extapi
+ * @subpackage		channel
+ */
 abstract class Extapi_Channel_Base {
 	
 	protected $config;
-	// store signing keys seperate from other config settings for security
+	// store sensitive values seperate from other config settings for security
 	protected $channel_signing_key;
 	protected $channel_account_password;
+	
 	protected $request;
 	protected $logger;
 	protected $requesting_channel_name;
-	// all possible communication fields for this type of channel
+	/*
+	 * the total set of all communication fields for this specific type of channel
+	 */
 	protected $channel_communication_fields = array();
-	// communication fields for this specific channel 
-	// [public]: need to access from Service classes
+	/*
+	 * any keys from $channel_communication_fields that are found in the 
+	 * request are placed into this array
+	 * [public]: need to access from Service classes
+	 * @todo see if this still needs to be public
+	 */
 	public $mapped_channel_communication_fields = array();
-	// fields that are required to have values in the request
+	/*
+	 * Fields that we require to be present in the request for this
+	 * type of channel
+	 */
 	protected $required_channel_communication_fields = array();
-	
-	public abstract function collect_request_params();
+
 	public abstract function authenticate_request();
 		
 	public function __construct($requesting_channel_name, array $request, Logger $logger) {
@@ -25,12 +44,32 @@ abstract class Extapi_Channel_Base {
 		$this->logger = $logger;
 		$this->load_config('channels', $requesting_channel_name);
 	}
+	/**
+	 * to be implemented by extending class
+	 * @return boolean success of collecting all required request params
+	 */
+	public function collect_request_params() {
+		$collected_all_required_params = null;
+		// verify that we have the expected number of required params
+	 	foreach ($this->required_channel_communication_fields as $required_field) {
+	 		if (empty($this->mapped_channel_communication_fields[$required_field])) {
+	 			$this->logger->warn(__METHOD__.'Value for required field['.$required_field.'] found found to be empty');
+	 			$collected_all_required_params = false;
+	 		}
+	 	}
+	 	return $collected_all_required_params===null?true:false;
+	}
 	public function config() {
 		return $this->config;
 	}
-	public function communicator() {
-		$this->specific_communicator;
-	}
+	/**
+	 * load the config file settings for this specific Channel
+	 * populate
+	 * - required_channel_communication_fields
+	 * - mapped_channel_communication_fields
+	 * - channel_communication_fields
+	 * - channel_signing_key and channel_account_password
+	 */
 	private function load_config($file, $channel_name=null) {
 		$config_folder =  dirname(dirname(__FILE__)).'/config/';
 		$config = parse_ini_file($config_folder.$file.'.ini',true);

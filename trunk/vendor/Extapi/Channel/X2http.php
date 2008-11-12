@@ -19,23 +19,6 @@ class Extapi_Channel_X2http extends Extapi_Channel_Base {
 	}
 	
 	/**
-	 * @see Channel_Base::collect_request_params()
-	 *
-	 */
-	public function collect_request_params() {
-		$collected_all_required_params = null;
-		// verify that we have the expected number of required params
-	 	foreach ($this->required_channel_communication_fields as $required_field) {
-	 		if (empty($this->mapped_channel_communication_fields[$required_field])) {
-	 			$this->logger->warn(__METHOD__.'Value for required field['.$required_field.'] found found to be empty');
-	 			$collected_all_required_params = false;
-	 		}
-	 	}
-	 	return $collected_all_required_params===null?true:false;
-	}
-
-	
-	/**
 	 * build the security http header for a given sms service
 	 */
 	private static function generate_authorization_headers($service_name,$api_key, $signing_key, $message_parameters_string ) {

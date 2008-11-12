@@ -25,23 +25,6 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Base {
 	}
 	
 	/**
-	 * @see Channel_Base::collect_request_params()
-	 *
-	 */
-	public function collect_request_params() {
-		$collected_all_required_params = null;
-		// verify that we have the expected number of required params
-	 	foreach ($this->required_channel_communication_fields as $required_field) {
-	 		if (empty($this->mapped_channel_communication_fields[$required_field])) {
-	 			$this->logger->warn(__METHOD__.'Value for required field['.$required_field.'] found found to be empty');
-	 			$collected_all_required_params = false;
-	 		}
-	 	}
-	 	return $collected_all_required_params===null?true:false;
-	}
-
-	
-	/**
 	 * build the security http header for a given sms service
 	 */
 	private static function generate_authorization_headers($service_name,$api_key, $signing_key, $message_parameters_string ) {
@@ -69,11 +52,11 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Base {
 		foreach ($channel_recipients as $channel_recipient) {
 			$message = array_get_else($channel_recipient,'message');
 			$username = array_get_else($channel_recipient,'user_name');
-			if ($logger->debugEnabled()) {
+			if ($logger->debug()) {
 				$logger->debug(__METHOD__.' Building auth header with '
 					."\nservice_name[".$this->config_get('channel_name')."]"
-					."\napi_key [".$this->config_get('api_key')."]"
-					."\nsignature_key [".$this->channel_signing_key."]"
+					."\napi_key [".($this->config_get('api_key')!=null?'...'.substr($this->config_get('api_key'),-3):'null')."]"
+					."\nsignature_key [".($this->channel_signing_key!=null?'...'.substr($this->channel_signing_key,-3):'null')."]"
 					."\nusername [".$username."]"
 					."\nbody [".$message."]");
 			}

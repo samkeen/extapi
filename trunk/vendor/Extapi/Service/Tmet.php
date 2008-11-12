@@ -1,6 +1,6 @@
 <?php
 
-require_once ('Base.php');
+require_once (dirname(__FILE__).'/Base.php');
 
 class Extapi_Service_Tmet extends Extapi_Service_Base {
 	

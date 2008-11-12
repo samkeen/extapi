@@ -11,7 +11,7 @@ abstract class Extapi_Service_Base {
 	public abstract function act_on_request_statement();
 	public abstract function gather_feedback();
 	
-	public function __construct(Extapi_Channel_Communicator $channel) {
+	public function __construct(Extapi_Channel_Base $channel) {
 		$this->channel = $channel;
 	}
 	
@@ -21,7 +21,7 @@ abstract class Extapi_Service_Base {
 	}
 	
 	/**
-	 * @todo pull this out to a util class (Channel_Communicator has the same method); 
+	 * @todo pull this out to a util class (Channel_Base has the same method); 
 	 */
 	protected function load_config($file, $section=null) {
 		$config_folder =  dirname(dirname(__FILE__)).'/config/';

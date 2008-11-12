@@ -1,5 +1,5 @@
 <?php
-abstract class Extapi_Channel_Communicator {
+abstract class Extapi_Channel_Base {
 	
 	protected $config;
 	// store signing keys seperate from other config settings for security

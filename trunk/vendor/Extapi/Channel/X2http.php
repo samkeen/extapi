@@ -1,6 +1,6 @@
 <?php
-require 'Communicator.php';
-class Extapi_Channel_X2http extends Extapi_Channel_Communicator {
+require 'Base.php';
+class Extapi_Channel_X2http extends Extapi_Channel_Base {
 	
 	public function __construct($requesting_channel_name, array $request, Logger $logger) {
 		parent::__construct($requesting_channel_name, $request, $logger);
@@ -8,7 +8,7 @@ class Extapi_Channel_X2http extends Extapi_Channel_Communicator {
 
 	
 	/**
-	 * @see Channel_Communicator::authenticate_request()
+	 * @see Channel_Base::authenticate_request()
 	 *
 	 */
 	public function authenticate_request() {
@@ -19,7 +19,7 @@ class Extapi_Channel_X2http extends Extapi_Channel_Communicator {
 	}
 	
 	/**
-	 * @see Channel_Communicator::collect_request_params()
+	 * @see Channel_Base::collect_request_params()
 	 *
 	 */
 	public function collect_request_params() {

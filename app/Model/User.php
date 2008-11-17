@@ -6,6 +6,7 @@ class Model_User extends Model_Base {
 		'password' => null,
 		'xmpp_jid' => null,
 		'sms_number' => null,
+		'age' => null,
 		'active' => null
 	);
 	public function __construct() {

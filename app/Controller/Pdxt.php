@@ -76,10 +76,10 @@ class Controller_Pdxt extends Controller_Base {
 		header('Content-type: text/plain',true);
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
 		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
-		if ($sms_channel && $sms_channel->collect_request_params() && $sms_channel->authenticate_request()) {
+		if ($sms_channel && $sms_channel->have_required_request_params() && $sms_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
 			$tmet_service = new Extapi_Service_Tmet($sms_channel);
-			$tmet_service->interpret_request_statement();
+			$tmet_service->parse_request_statement();
 			$tmet_service->act_on_request_statement();			
 			if ($tmet_service->has_feedback()) {
 				$arrivals = $tmet_service->gather_feedback();
@@ -90,7 +90,7 @@ class Controller_Pdxt extends Controller_Base {
 				$this->viewless();
 			}
 		} else {
-		if (! $sms_channel) {
+			if (! $sms_channel) {
 				ENV::$log->error(__METHOD__.' Util_VendorFactory::get_instance failed for [extapi/channel/'.$requesting_channel.']');
 			} else {
 				ENV::$log->notice(__METHOD__.' Required components were not found and/or authentcation failed for this request');
@@ -118,11 +118,10 @@ extapi.com/pdxt/xmpp/receiver/x2http.xml?from=sam.sjk%40gmail.com&to=pdxtt%40ext
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
 		$xmpp_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
 		
-		if ($xmpp_channel && $xmpp_channel->collect_request_params() && $xmpp_channel->authenticate_request()) {
+		if ($xmpp_channel && $xmpp_channel->have_required_request_params() && $xmpp_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
 			$tmet_service = new Extapi_Service_Tmet($xmpp_channel);
-			$tmet_service->interpret_request_statement();
-			$tmet_service->act_on_request_statement();
+			$tmet_service->enact();
 			if ($tmet_service->has_feedback()) {	
 				$arrivals = $tmet_service->gather_feedback();
 				$this->payload->arrivals = array_get_else($arrivals,'arrivals');

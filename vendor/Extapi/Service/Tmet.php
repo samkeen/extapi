@@ -18,9 +18,9 @@ class Extapi_Service_Tmet extends Extapi_Service_Base {
 
 	/**
 	 * 
-	 * @see Extapi_Service_Base::interpret_request_statement()
+	 * @see Extapi_Service_Base::parse_request_statement()
 	 */
-	public function interpret_request_statement() {
+	public function parse_request_statement() {
 		$statement_parts = explode(' ',array_get_else($this->channel->mapped_channel_communication_fields,'text',array()));
 		$this->stop_id = array_get_else($statement_parts,0);
 		$this->vehicle_id = array_get_else($statement_parts,1);

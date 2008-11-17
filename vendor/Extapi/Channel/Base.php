@@ -2,7 +2,7 @@
 /**
  * Base class for all channels
  * Provides base utility methods and defines the interface of
- * - collect_request_params()
+ * - have_required_request_params()
  * - authenticate_request()
  * 
  *
@@ -48,7 +48,7 @@ abstract class Extapi_Channel_Base {
 	 * to be implemented by extending class
 	 * @return boolean success of collecting all required request params
 	 */
-	public function collect_request_params() {
+	public function have_required_request_params() {
 		$collected_all_required_params = null;
 		// verify that we have the expected number of required params
 	 	foreach ($this->required_channel_communication_fields as $required_field) {

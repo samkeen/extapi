@@ -2,7 +2,7 @@
 /**
  * Base class for all services
  * Provides base utility methods and defines the interface of
- * - interpret_request_statement()
+ * - parse_request_statement()
  * - act_on_request_statement()
  * - gather_feedback()
  * 
@@ -17,7 +17,7 @@ abstract class Extapi_Service_Base {
 	protected $http_util;
 	protected $feedback = null;
 	
-	public abstract function interpret_request_statement();
+	public abstract function parse_request_statement();
 	public abstract function act_on_request_statement();
 	public abstract function gather_feedback();
 	
@@ -25,9 +25,12 @@ abstract class Extapi_Service_Base {
 		$this->channel = $channel;
 	}
 	
+	public function enact() {
+		$this->parse_request_statement();
+		$this->act_on_request_statement();
+	}
 	public function has_feedback() {
 		return $this->feedback !== null;
-	
 	}
 	
 	/**

@@ -1,4 +1,9 @@
 <?php
+/**
+ * 
+ * 
+ *
+ */
 class Controller_Users extends Controller_Base {
 	
 	protected function init() {
@@ -48,6 +53,13 @@ class Controller_Users extends Controller_Base {
 		} else {
 			$this->feedback = "There was a problem deleting this user";
 		}
+		$this->payload->users = $user->find();
+	}
+	protected function over20_action() {
+		$user = new Model_User();
+		$user->set('active',true);
+		$user->set('age','>','20');
+		$this->set_template('users/default');
 		$this->payload->users = $user->find();
 	}
 }

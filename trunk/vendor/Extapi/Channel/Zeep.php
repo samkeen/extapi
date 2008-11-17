@@ -9,7 +9,7 @@ class Extapi_Channel_Zeep extends Extapi_Channel_Base {
 	
 	/**
 	 * @see Channel_Base::authenticate_request()
-	 *
+	 * @return boolean Success of authentication
 	 */
 	public function authenticate_request() {
 		$authenticated = false;

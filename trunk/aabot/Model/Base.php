@@ -11,8 +11,19 @@ abstract class Model_Base {
 	protected $model_name;
 	protected $model_id_name;
 	protected $id = null;
+	/**
+	 * defined in the implementing class thusly
+	 * 	protected $attributes = array(
+	 *	  'username' => null,
+	 *	  'password' => null,
+	 *	  'xmpp_jid' => null,
+	 *	  'sms_number' => null,
+	 *	  'active' => null
+	 *  );
+	 */
 	protected $attributes = array();
 	private $field_values = array();
+	private $field_value_comparitors = array();
 	
 	/**
 	 * Allow an injected db_handle, else create on the fly
@@ -27,7 +38,23 @@ abstract class Model_Base {
 		$this->model_name = strtolower(str_replace('Model_','',$model_class));
 		$this->model_id_name = $this->model_name.'_id';
 	}
-	public function set($field_name, $field_value) {
+	/**
+	 * set reacts to 2 parameter signatures
+	 * $field_name, $comparison_operator, $field_value
+	 * OR
+	 * $field_name, $field_value
+	 */
+	public function set() {
+		$args = func_get_args();
+		$comparison_operator = '=';
+		$field_name = $args[0];
+		$field_value = func_num_args()==3?func_get_arg(2):func_get_arg(1);
+		if (func_num_args()==3) { // ($field_name, $comparison_operator, $field_value)
+			$field_value = func_get_arg(2);
+			$comparison_operator = func_get_arg(1);
+		} else { // ($field_name, $field_value)
+			$field_value = func_get_arg(1);
+		}
 		/*
 		 * look to see if setting id
 		 */
@@ -35,8 +62,10 @@ abstract class Model_Base {
 			$this->id = $field_value;
 		} else if (key_exists($field_name,$this->attributes)) {
 			$this->field_values[$field_name] = $field_value;
+			$this->field_value_comparitors[$field_name] = $comparison_operator;
 		}
 	}
+
 	/**
 	 * 
 	 * @param array $submitted_data {optional, we could have set the 
@@ -114,21 +143,7 @@ abstract class Model_Base {
 		$one = $this->find($field_values);
 		return isset($one[0]) ? $one[0] : null;
 	}
-	/**
-	 * 
-	 * @param array $model_id {optional, we could have set the 
-	 * various field values on the model prior to calling this method
-	 */
-//	public function load($model_id=null) {
-//		$result = null;
-//		$model_id = $model_id===null ? $this->id : $model_id;
-//		if ($model_id) {
-//			$result = $this->find(array($this->name.'_id'=>$model_id));
-//		} else {
-//			ENV::$log->error(__METHOD__. ' Valid model id not supplied as param and not currently set on $this');
-//		}
-//		return  $result;
-//	}
+
 	private function build_where_clause() {
 		$where_clause = '';
 		// if $this->id is set, just do
@@ -138,7 +153,7 @@ abstract class Model_Base {
 			$where_clause = ' WHERE ';
 			$and = '';
 			foreach (array_keys($this->field_values) as $field_name) {		
-				$where_clause .= $and.'`'.$field_name.'` = :'.$field_name;
+				$where_clause .= $and.'`'.$field_name.'` '.$this->field_value_comparitors[$field_name].' :'.$field_name;
 				$and = ' AND ';
 			}
 		}

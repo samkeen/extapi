@@ -84,8 +84,12 @@ abstract class Model_Base {
 				? $this->build_update_statement() 
 				: $this->build_insert_statement();
 			ENV::$log->debug(__METHOD__.' built save QUERY: '.$save_statement);
+			$statement = null;
 			try {
-				$statement = $this->db_handle->prepare($save_statement);
+				if( ! $statement = $this->db_handle->prepare($save_statement)) {
+					ENV::$log->error(__METHOD__.' - $statement::prepare failed for query: '
+						.$save_statement."\n".print_r($this->db_handle->errorInfo(),1));
+				}
 				foreach ($this->field_values as $field_name => $field_value) {
 					 $statement->bindValue(':'.$field_name, $field_value);
 				}
@@ -93,6 +97,10 @@ abstract class Model_Base {
 					$statement->bindValue(':'.$this->model_id_name, $this->id);
 				}
 				$rows_affected = $statement->execute();
+				if ($rows_affected===false) {
+					ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
+						.$save_statement."\n".print_r($statement->errorInfo(),1));
+				}
 			} catch (Exception $e) {
 				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
 			}
@@ -189,6 +197,13 @@ abstract class Model_Base {
 	private function set_field_values(array $submitted_data=null) {
 		$submitted_data = array_get_else($submitted_data,$this->model_name);
 		if ($submitted_data) {
+			// keep `created` and `modified` internal
+			if (isset($submitted_data['created']) || isset($submitted_data['modified']) ) {
+				ENV::$log->notice(__METHOD__.' Found `created` and/or `modified` in submitted data.  These are for internal use only so they will be ignored');
+				unset($submitted_data['created']);
+				unset($submitted_data['modified']);
+			}
+			
 			// check for model_id
 			if (isset($submitted_data[$this->model_id_name])) {
 				$this->id = $submitted_data[$this->model_id_name];

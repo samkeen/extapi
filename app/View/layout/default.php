@@ -9,6 +9,7 @@
 <body>
 <div id="page-header">
 <h1>Extapi</h1>
+<div id="feedback-output"><?php echo $this->feedback; ?></div>
 </div>
 <div id="body-content">
 <?php echo $this->rendered_template; ?>

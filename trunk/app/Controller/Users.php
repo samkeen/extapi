@@ -57,6 +57,7 @@ class Controller_Users extends Controller_Base {
 	}
 	protected function over20_action() {
 		$user = new Model_User();
+		// could also be: $user->set('active','=',true);
 		$user->set('active',true);
 		$user->set('age','>','20');
 		$this->set_template('users/default');

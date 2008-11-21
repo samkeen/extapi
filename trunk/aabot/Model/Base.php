@@ -11,9 +11,14 @@ abstract class Model_Base {
 	protected $model_name;
 	protected $model_id_name;
 	protected $id = null;
+	private $base_attribute_definitions = array(
+		'created' => null,
+		'modified' => null,
+		'active' => null
+	);
 	/**
 	 * defined in the implementing class thusly
-	 * 	protected $attributes = array(
+	 * 	protected $attribute_definitions = array(
 	 *	  'username' => null,
 	 *	  'password' => null,
 	 *	  'xmpp_jid' => null,
@@ -21,7 +26,7 @@ abstract class Model_Base {
 	 *	  'active' => null
 	 *  );
 	 */
-	protected $attributes = array();
+	protected $attribute_definitions = array();
 	private $field_values = array();
 	private $field_value_comparitors = array();
 	
@@ -35,6 +40,7 @@ abstract class Model_Base {
 			ENV::$log->error(__METHOD__.' Unable to load db config file');
 		}
 		$this->db_handle = $db_handle;
+		$this->attribute_definitions = array_merge($this->attribute_definitions, $this->base_attribute_definitions);
 		$this->model_name = strtolower(str_replace('Model_','',$model_class));
 		$this->model_id_name = $this->model_name.'_id';
 	}
@@ -45,6 +51,7 @@ abstract class Model_Base {
 	 * $field_name, $field_value
 	 */
 	public function set() {
+		// determine the param signature we are in and set vars accordingly
 		$args = func_get_args();
 		$comparison_operator = '=';
 		$field_name = $args[0];
@@ -55,12 +62,10 @@ abstract class Model_Base {
 		} else { // ($field_name, $field_value)
 			$field_value = func_get_arg(1);
 		}
-		/*
-		 * look to see if setting id
-		 */
+		// look to see if setting id
 		if ($field_name==$this->model_id_name) {
 			$this->id = $field_value;
-		} else if (key_exists($field_name,$this->attributes)) {
+		} else if (key_exists($field_name,$this->attribute_definitions)) {
 			$this->field_values[$field_name] = $field_value;
 			$this->field_value_comparitors[$field_name] = $comparison_operator;
 		}
@@ -161,14 +166,14 @@ abstract class Model_Base {
 	}
 	private function build_insert_statement() {
 		$insert_statement = 
-			'INSERT INTO '.$this->model_name.'( `'.implode('`,`',array_keys($this->field_values)).'` )'
-			.' VALUES ( :'.implode(',:',array_keys($this->field_values)).' )';
+			'INSERT INTO '.$this->model_name.'( `'.implode('`,`',array_keys($this->field_values)).'`, `modified`, `created` )'
+			.' VALUES ( :'.implode(',:',array_keys($this->field_values)).', now(), now() )';
 		return $insert_statement;
 	}
 	private function build_update_statement() {
-		$update_statement = 'UPDATE `'.$this->model_name.'` SET ';
+		$update_statement = 'UPDATE `'.$this->model_name.'` SET modified = now(), ';
 		$comma = '';
-		foreach (array_keys($this->attributes) as $field_name) {		
+		foreach (array_keys($this->attribute_definitions) as $field_name) {		
 			if (isset($this->field_values[$field_name])) {
 				$update_statement .= $comma.'`'.$field_name.'` = :'.$field_name;
 				$comma = ', ';
@@ -178,7 +183,7 @@ abstract class Model_Base {
 	}
 	/**
 	 * store the cleansed submitted values and merge them with the
-	 * attributes for this model. (we keep the submitted values for
+	 * attribute_definitions for this model. (we keep the submitted values for
 	 * doing updates)
 	 */
 	private function set_field_values(array $submitted_data=null) {
@@ -188,7 +193,7 @@ abstract class Model_Base {
 			if (isset($submitted_data[$this->model_id_name])) {
 				$this->id = $submitted_data[$this->model_id_name];
 			}
-			$submitted_data = array_intersect_key($submitted_data, $this->attributes);
+			$submitted_data = array_intersect_key($submitted_data, $this->attribute_definitions);
 			$this->field_values = array_merge($this->field_values, $submitted_data);
 		}
 	}

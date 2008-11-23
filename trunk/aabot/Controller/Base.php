@@ -19,6 +19,8 @@ abstract class Controller_Base {
 	public $recieved_form_data = false;
 	public $form_data = array();
 	
+	protected $feedback = null;
+	
 	// these are ment to be overridden in Controllers
 	protected $use_template = true;
 	protected $use_layout = true;
@@ -194,6 +196,7 @@ abstract class Controller_Base {
 		if ($this->use_layout) {
 			// set a short name ref to $this->payload for ease of use in the view.
 			$payload = $this->payload;
+			$feedback = $this->feedback;
 			include($this->layout_file);
 		}
 		if (ENV::debug_active() && Util_Router::debug_requested()) {
@@ -231,6 +234,7 @@ abstract class Controller_Base {
 	private function digest_template() {
 		// set a short name ref to $this->payload for ease of use in the view.
 		$payload = $this->payload;
+		$feedback = $this->feedback;
 		ob_start();
 		include($this->template_file);
 		if ($this->use_layout) {

@@ -1,3 +1,4 @@
+<?php $payload->title = t('Profiles'); ?>
 <h1>Profiles</h1>
 <table>
 <tr>

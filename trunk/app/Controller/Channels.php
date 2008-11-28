@@ -19,8 +19,8 @@ class Controller_Channels extends Controller_Base {
 	}
 	
 	protected function add_action() {
+		$channel = new Model_Channel();
 		if ($this->recieved_form_data) {
-			$channel = new Model_Channel();
 			if ($channel->save($this->form_data)) {
 				$this->feedback = "The Channel has been created";
 				$this->redirect('/channels');
@@ -28,11 +28,12 @@ class Controller_Channels extends Controller_Base {
 				$this->feedback = "There was a problem creating the channel";
 			}
 		}
+		$this->payload->profiles = $channel->Profile(array('profile_id'=>'name'));
 		// just display form	
 	}
 	protected function edit_action() {
+		$channel = new Model_Channel();
 		if ($this->recieved_form_data) {
-			$channel = new Model_Channel();
 			if ($channel->save($this->form_data)) {
 				$this->feedback = "The Channel has been updated";
 				$this->redirect('/channels');
@@ -40,8 +41,8 @@ class Controller_Channels extends Controller_Base {
 				$this->feedback = "There was a problem creating the channel";
 			}
 		}
-		$channel = new Model_Channel();
 		$channel->set('channel_id',$this->next_request_segment_value());
+		$this->payload->profiles = $channel->Profile(array('profile_id'=>'name'));
 		$this->payload->channel = $channel->findOne();
 	}
 	protected function delete_action() {

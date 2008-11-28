@@ -13,6 +13,7 @@
 	<p><label>API Username: <input id="channel-api_username" name="channel[api_username]" type="text" value="<?php $this->form_get('api_username'); ?>" /></label></p>
 	<p><label>API Password: <input id="channel-api_password" name="channel[api_password]" type="text" value="<?php $this->form_get('api_password'); ?>" /></label></p>
 	<p><input type="submit" name="submit" value="submit" /><input type="hidden" name="__method" value="post" /></p>
+	<p><label><?php $form->renderSelectList('Channel.profile_id',$payload->profiles, $channel['profile_id']); ?></label></p>
 	<input type="hidden" name="channel[channel_id]" value="<?php echo($channel['channel_id']); ?>" />
 	<input type="hidden" name="__method" value="post" />
 </form>

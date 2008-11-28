@@ -11,5 +11,6 @@
 	<p><label>API Port: <input id="channel-api_port" name="channel[api_port]" type="text" ></label></p>
 	<p><label>API Username: <input id="channel-api_username" name="channel[api_username]" type="text" ></label></p>
 	<p><label>API Password: <input id="channel-api_password" name="channel[api_password]" type="text" ></label></p>
+	<p><label><?php $form->renderSelectList('Channel.profile_id'); ?></label></p>
 	<p><input type="submit" name="submit" value="submit" /><input type="hidden" name="__method" value="post" /></p>
 </form>

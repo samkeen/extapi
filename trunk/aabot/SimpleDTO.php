@@ -7,6 +7,10 @@ class SimpleDTO {
 	
 	private $base_attributes = array();
 	
+	public function __construct($attributes=null) {
+		$this->base_attributes = $attributes!==null?$attributes:array();
+	}
+	
 	public function __get($key) {
 		return key_exists($key,$this->base_attributes) ? $this->base_attributes[$key] : null;
 	}

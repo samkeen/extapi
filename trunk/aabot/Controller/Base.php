@@ -235,6 +235,7 @@ abstract class Controller_Base {
 		// set a short name ref to $this->payload for ease of use in the view.
 		$payload = $this->payload;
 		$feedback = $this->feedback;
+		$form = new View_Form();
 		ob_start();
 		include($this->template_file);
 		if ($this->use_layout) {

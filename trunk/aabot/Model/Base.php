@@ -16,6 +16,7 @@ abstract class Model_Base {
 		'modified' => null,
 		'active' => null
 	);
+	protected $relations = array ();
 	/**
 	 * defined in the implementing class thusly
 	 * 	protected $attribute_definitions = array(
@@ -41,14 +42,51 @@ abstract class Model_Base {
 		}
 		$this->db_handle = $db_handle;
 		$this->attribute_definitions = array_merge($this->attribute_definitions, $this->base_attribute_definitions);
+		if (isset($this->relations['belongs_to'])) {
+			$belongs_to = explode(',',$this->relations['belongs_to']);
+			foreach ($belongs_to as $relation) {
+				$this->attribute_definitions[strtolower($relation).'_id'] = 'int';
+			}
+		}
+		
 		$this->model_name = strtolower(str_replace('Model_','',$model_class));
 		$this->model_id_name = $this->model_name.'_id';
 	}
 	/**
-	 * set reacts to 2 parameter signatures
-	 * $field_name, $comparison_operator, $field_value
+	 * 
+	 * ex usage: $this->payload->users = $profile->User(array('user_id'=>'username'));
+	 */
+	public function __call($name, $arguments) {
+		if (isset($this->relations['has_many'][$name])) {
+			$return_structure = array_get_else($arguments,0);
+			$where_conditions = array_get_else($arguments,1);
+			$result = null;
+			// SELECT b, d FROM foo WHERE `b` = :b AND `d` = :d
+			$find_statement = 
+				$this->build_select_clause($return_structure).' FROM '.$name;
+			ENV::$log->debug(__METHOD__.' built find QUERY: '.$find_statement);
+			try {
+				$statement = $this->db_handle->prepare($find_statement);
+//				foreach ($this->field_values as $field_name => $field_value) {
+//					$statement->bindValue(':'.$field_name, $field_value);
+//				}
+//				if ($this->id !== null) {
+//					$statement->bindValue(':'.$this->model_id_name, $this->id);
+//				}
+				$statement->execute();
+				$result = $statement->fetchAll(PDO::FETCH_ASSOC);
+			} catch (Exception $e) {
+				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+			}
+		}
+		return $this->apply_return_structure($return_structure,$result);
+		
+	}
+	/**
+	 * set reacts to 2 parameter signatures:
+	 * set($field_name, $comparison_operator, $field_value)
 	 * OR
-	 * $field_name, $field_value
+	 * set($field_name, $field_value)
 	 */
 	public function set() {
 		// determine the param signature we are in and set vars accordingly
@@ -144,7 +182,6 @@ abstract class Model_Base {
 			if ($this->id !== null) {
 				$statement->bindValue(':'.$this->model_id_name, $this->id);
 			}
-			
 			$statement->execute();
 			$result = $statement->fetchAll(PDO::FETCH_ASSOC);
 		} catch (Exception $e) {
@@ -152,11 +189,54 @@ abstract class Model_Base {
 		}
 		return $result;
 	}
+
 	public function findOne(array $field_values = null) {
 		$one = $this->find($field_values);
 		return isset($one[0]) ? $one[0] : null;
 	}
-
+	/**
+	 * ex: 
+	 * return structure is: array('user_id'=>array('username','age'));
+	 * row of results: array('user_id'=> 2, 'age'=>30, 'username' => 'sam');
+	 * transformed row = array(2=>array(age=>30, username=>sam))
+	 * 
+	 * @param $return_structure
+	 * array({key} => {field1})
+	 * OR
+	 * array({key} => array({field1}, {field2},...))
+	 */
+	private function apply_return_structure(array $return_structure, $results) {
+		$structure_formatted_results = null;
+		if (isset($results[0])) {
+			foreach ($results as $result) {
+				foreach ($return_structure as $structure_key => $field) {
+					if( ! is_array($field)) {
+						$structure_formatted_results[$result[$structure_key]] = $result[$field];
+					} else {
+						foreach ($field as $value) {
+							$structure_formatted_results[$result[$structure_key]][$value] = $result[$value];
+						}
+					}
+				}
+			}
+		}
+		return $structure_formatted_results;
+	}
+	/**
+	 * if $fields_is_return_struct is true, we blend the keys into the values and create the
+	 * select from that
+	 */
+	private function build_select_clause(array $fields, $fields_is_return_struct=true) {
+		$select_fields[] = key($fields);
+		foreach ($fields as $field) {
+			if (is_array($field)) {
+				$select_fields = array_merge($select_fields, $field);
+			} else {
+				$select_fields[] = $field;
+			}
+		}
+		return isset($select_fields[0]) ? 'SELECT '.implode(', ',$select_fields):null;
+	}
 	private function build_where_clause() {
 		$where_clause = '';
 		// if $this->id is set, just do
@@ -203,7 +283,6 @@ abstract class Model_Base {
 				unset($submitted_data['created']);
 				unset($submitted_data['modified']);
 			}
-			
 			// check for model_id
 			if (isset($submitted_data[$this->model_id_name])) {
 				$this->id = $submitted_data[$this->model_id_name];

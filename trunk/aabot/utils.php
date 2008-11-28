@@ -54,8 +54,12 @@ function get($array, $key, $val_if_not_found=null) {
  *
  * @param unknown_type $text
  */
-function h($text) {
-	echo htmlentities($text, ENT_QUOTES, 'UTF-8');
+function h($text, $echo_output = true) {
+	if ($echo_output) {
+		echo htmlentities($text, ENT_QUOTES, 'UTF-8');
+	} else {
+		return htmlentities($text, ENT_QUOTES, 'UTF-8');
+	}
 }
 /**
  * Stub for translation function

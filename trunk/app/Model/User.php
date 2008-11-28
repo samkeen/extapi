@@ -9,6 +9,9 @@ class Model_User extends Model_Base {
 		'age' => 'integer, min=1, max=150',
 		'active' => 'boolean'
 	);
+	protected $relations = array (
+		'has_many' => 'Profile'
+	);
 	public function __construct() {
 		parent::__construct(__CLASS__);
 	}

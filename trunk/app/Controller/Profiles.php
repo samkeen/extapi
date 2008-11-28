@@ -19,6 +19,7 @@ class Controller_Profiles extends Controller_Base {
 	}
 	
 	protected function add_action() {
+		$profile = new Model_Profile();
 		if ($this->recieved_form_data) {
 			$profile = new Model_Profile();
 			if ($profile->save($this->form_data)) {
@@ -28,7 +29,8 @@ class Controller_Profiles extends Controller_Base {
 				$this->feedback = "There was a problem creating the profile";
 			}
 		}
-		// just display form	
+//		$this->payload->users = $profile->User(array('user_id'=>array('username','age')));
+		$this->payload->users = $profile->User(array('user_id'=>'username'));	
 	}
 	protected function edit_action() {
 		if ($this->recieved_form_data) {
@@ -41,6 +43,7 @@ class Controller_Profiles extends Controller_Base {
 			}
 		}
 		$profile = new Model_Profile();
+		$this->payload->users = $profile->User(array('user_id'=>'username'));
 		$profile->set('profile_id',$this->next_request_segment_value());
 		$this->payload->profile = $profile->findOne();
 	}

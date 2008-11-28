@@ -19,8 +19,8 @@ class Controller_Services extends Controller_Base {
 	}
 	
 	protected function add_action() {
+		$service = new Model_Service();
 		if ($this->recieved_form_data) {
-			$service = new Model_Service();
 			if ($service->save($this->form_data)) {
 				$this->feedback = "The Service has been created";
 				$this->redirect('/services');
@@ -28,11 +28,12 @@ class Controller_Services extends Controller_Base {
 				$this->feedback = "There was a problem creating the service";
 			}
 		}
+		$this->payload->profiles = $service->Profile(array('profile_id'=>'name'));
 		// just display form	
 	}
 	protected function edit_action() {
+		$service = new Model_Service();
 		if ($this->recieved_form_data) {
-			$service = new Model_Service();
 			if ($service->save($this->form_data)) {
 				$this->feedback = "The Service has been updated";
 				$this->redirect('/services');
@@ -40,8 +41,8 @@ class Controller_Services extends Controller_Base {
 				$this->feedback = "There was a problem creating the service";
 			}
 		}
-		$service = new Model_Service();
 		$service->set('service_id',$this->next_request_segment_value());
+		$this->payload->profiles = $service->Profile(array('profile_id'=>'name'));
 		$this->payload->service = $service->findOne();
 	}
 	protected function delete_action() {

@@ -21,7 +21,6 @@ class Controller_Profiles extends Controller_Base {
 	protected function add_action() {
 		$profile = new Model_Profile();
 		if ($this->recieved_form_data) {
-			$profile = new Model_Profile();
 			if ($profile->save($this->form_data)) {
 				$this->feedback = "The Profile has been created";
 				$this->redirect('/profiles');

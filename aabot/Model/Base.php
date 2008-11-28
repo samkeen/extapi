@@ -57,7 +57,7 @@ abstract class Model_Base {
 	 * ex usage: $this->payload->users = $profile->User(array('user_id'=>'username'));
 	 */
 	public function __call($name, $arguments) {
-		if (isset($this->relations['has_many'][$name])) {
+		if (isset($this->relations['belongs_to'][$name])) {
 			$return_structure = array_get_else($arguments,0);
 			$where_conditions = array_get_else($arguments,1);
 			$result = null;

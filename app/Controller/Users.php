@@ -17,6 +17,12 @@ class Controller_Users extends Controller_Base {
 		//$user->set('active',true);
 		$this->payload->users = $user->find();
 	}
+
+	protected function view_action() {
+		$user = new Model_User();
+		$user->set('user_id',$this->next_request_segment_value());
+		$this->payload->user = new SimpleDTO($user->findOne());
+	}
 	
 	protected function add_action() {
 		if ($this->recieved_form_data) {
@@ -27,8 +33,7 @@ class Controller_Users extends Controller_Base {
 			} else {
 				$this->feedback = "There was a problem creating the user";
 			}
-		}
-		// just display form	
+		}	
 	}
 	protected function edit_action() {
 		if ($this->recieved_form_data) {

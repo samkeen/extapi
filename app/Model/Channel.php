@@ -15,6 +15,9 @@ class Model_Channel extends Model_Base {
 		'api_password' => 'min=4, max=50',
 		'active' => 'boolean'
 	);
+	protected $relations = array (
+		'belongs_to' => 'Profile'
+	);
 	public function __construct() {
 		parent::__construct(__CLASS__);
 	}

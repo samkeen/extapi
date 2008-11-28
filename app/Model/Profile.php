@@ -5,6 +5,10 @@ class Model_Profile extends Model_Base {
 		'name' => '/a-z0-9_- /i, min=4, max=50',
 		'active' => 'boolean'
 	);
+	protected $relations = array (
+		'belongs_to' => 'User',
+		'has_many' => 'Channel, Service'
+	);
 	public function __construct() {
 		parent::__construct(__CLASS__);
 	}

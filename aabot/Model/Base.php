@@ -34,7 +34,7 @@ abstract class Model_Base {
 	/**
 	 * Allow an injected db_handle, else create on the fly
 	 */
-	public function __construct($model_class, $db_handle=null) {
+	public function __construct($db_handle=null) {
 		if ($db_handle===null && $config = ENV::load_config_file('db_conf')) {
 			$db_handle = new Model_DBHandle($config);
 		} else {
@@ -48,8 +48,7 @@ abstract class Model_Base {
 				$this->attribute_definitions[strtolower($relation).'_id'] = 'int';
 			}
 		}
-		
-		$this->model_name = strtolower(str_replace('Model_','',$model_class));
+		$this->model_name = strtolower(str_replace('Model_','',get_class($this)));
 		$this->model_id_name = $this->model_name.'_id';
 	}
 	/**

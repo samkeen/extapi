@@ -9,7 +9,5 @@ class Model_Profile extends Model_Base {
 		'belongs_to' => 'User',
 		'has_many' => 'Channel, Service'
 	);
-	public function __construct() {
-		parent::__construct(__CLASS__);
-	}
+
 }

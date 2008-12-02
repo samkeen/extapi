@@ -12,7 +12,5 @@ class Model_User extends Model_Base {
 	protected $relations = array (
 		'has_many' => 'Profile'
 	);
-	public function __construct() {
-		parent::__construct(__CLASS__);
-	}
+
 }

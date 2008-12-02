@@ -1,4 +1,4 @@
-<?php $payload->title = th('Extapi :: Home',false); ?>
+<?php $payload->title = 'PDXT :: Home'; ?>
 <h1>Get Portland Trimet arrival times through SMS</h1>
 <p>Simply text "pdxt {stop_id}" to 368674</p>
 <p>For example, texting...</p>

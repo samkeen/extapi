@@ -1,5 +1,12 @@
 <?php
 abstract class Controller_Base {
+	
+	public $model_name;
+	public $payload;
+	public $recieved_form_data = false;
+	public $form_data = array();
+	public $name;
+	
 	protected $request_context;
 	protected $request_segments = null;
 	// resp type the user explicitly requested
@@ -14,10 +21,10 @@ abstract class Controller_Base {
 	protected $router;
 	protected $requested_action = null;
 	
-	protected $model_name;
 	
-	public $recieved_form_data = false;
-	public $form_data = array();
+	
+	
+	
 	
 	protected $feedback = null;
 	
@@ -30,7 +37,7 @@ abstract class Controller_Base {
 	// collected debug messages that can be shown in the view
 	private $debug_messages = array();
 	
-	protected $payload;
+	
 	protected $rendered_template;
 	
 	
@@ -44,6 +51,7 @@ abstract class Controller_Base {
 		global $logger;
 		$this->logger = $logger;
 		$this->router = $router;
+		$this->name = strtolower(str_replace('Controller_','',get_class($this)));
 		
 		$this->request_context = $this->router->request_context();
 		$this->request_segments = $this->request_context['request_segments'];
@@ -235,7 +243,7 @@ abstract class Controller_Base {
 		// set a short name ref to $this->payload for ease of use in the view.
 		$payload = $this->payload;
 		$feedback = $this->feedback;
-		$form = new View_Form();
+		$form = new View_Form($this);
 		ob_start();
 		include($this->template_file);
 		if ($this->use_layout) {

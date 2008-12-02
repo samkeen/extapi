@@ -14,7 +14,6 @@ class Controller_Channels extends Controller_Base {
 	 */
 	protected function default_action() {
 		$channel = new Model_Channel();
-		//$channel->set('active',true);
 		$this->payload->channels = $channel->find();
 	}
 	

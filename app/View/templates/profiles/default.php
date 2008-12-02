@@ -1,4 +1,4 @@
-<?php $payload->title = t('Profiles'); ?>
+<?php $payload->title = th('Profiles',false); ?>
 <h1>Profiles</h1>
 <table>
 <tr>

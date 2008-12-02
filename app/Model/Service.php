@@ -10,7 +10,5 @@ class Model_Service extends Model_Base {
 	protected $relations = array (
 		'belongs_to' => 'Profile'
 	);
-	public function __construct() {
-		parent::__construct(__CLASS__);
-	}
+
 }

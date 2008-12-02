@@ -12,19 +12,18 @@ class Controller_Users extends Controller_Base {
 	/**
 	 * show list of users
 	 */
-	protected function default_action() {
+	protected function index() {
 		$user = new Model_User();
-		//$user->set('active',true);
 		$this->payload->users = $user->find();
 	}
 
-	protected function view_action() {
+	protected function view() {
 		$user = new Model_User();
 		$user->set('user_id',$this->next_request_segment_value());
 		$this->payload->user = new SimpleDTO($user->findOne());
 	}
 	
-	protected function add_action() {
+	protected function add() {
 		if ($this->recieved_form_data) {
 			$user = new Model_User();
 			if ($user->save($this->form_data)) {
@@ -35,7 +34,7 @@ class Controller_Users extends Controller_Base {
 			}
 		}	
 	}
-	protected function edit_action() {
+	protected function edit() {
 		if ($this->recieved_form_data) {
 			$user = new Model_User();
 			if ($user->save($this->form_data)) {
@@ -49,7 +48,7 @@ class Controller_Users extends Controller_Base {
 		$user->set('user_id',$this->next_request_segment_value());
 		$this->payload->user = $user->findOne();
 	}
-	protected function delete_action() {
+	protected function delete() {
 		$user = new Model_User();
 		$user->set('user_id',$this->next_request_segment_value());
 		if ($user->delete()) {
@@ -60,7 +59,7 @@ class Controller_Users extends Controller_Base {
 		}
 		$this->payload->users = $user->find();
 	}
-	protected function over20_action() {
+	protected function over20() {
 		$user = new Model_User();
 		// could also be: $user->set('active','=',true);
 		$user->set('active',true);

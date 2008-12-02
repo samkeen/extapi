@@ -21,7 +21,7 @@ final class CONSTS {
 	public static $DEFAULT_TEMPLATE = 'default';
 	public static $DEFAULT_LAYOUT = 'default';
 	
-	public static $DEFAULT_ACTION = 'default_action';
+	public static $DEFAULT_ACTION = 'index';
 	public static $FILE_NOT_FOUND_ACTION = 'file_not_found_action';
 	
 	public static $APP_DIR = '/';

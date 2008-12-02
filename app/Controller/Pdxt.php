@@ -4,11 +4,11 @@ class Controller_Pdxt extends Controller_Base {
 	protected function init() {
 		$this->default_response_type = CONSTS::$RESPONSE_TEXT;
 	}
-	protected function default_action() {
+	protected function index() {
 		$this->payload->message = "Hello, this is the PDXt controller";
 		$this->payload->controller = print_r($this,1);
 	}
-	protected function sms_action() {
+	protected function sms() {
 		switch ($this->next_request_segment_value()) {
 			case 'receiver':
 				$this->sms_receiver();
@@ -21,7 +21,7 @@ class Controller_Pdxt extends Controller_Base {
 			break;
 		}
 	}
-	protected function xmpp_action() {
+	protected function xmpp() {
 		switch ($this->next_request_segment_value()) {
 			case 'receiver':
 				$this->xmpp_receiver();
@@ -35,7 +35,7 @@ class Controller_Pdxt extends Controller_Base {
 		}
 		
 	}
-	protected function register_action() {
+	protected function register() {
 		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/zeep');
 		$this->payload->zeep_channel = $sms_channel->config();
 		$this->payload->user_id = 'samkeen';

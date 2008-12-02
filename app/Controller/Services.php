@@ -12,13 +12,13 @@ class Controller_Services extends Controller_Base {
 	/**
 	 * show list of services
 	 */
-	protected function default_action() {
+	protected function index() {
 		$service = new Model_Service();
 		//$service->set('active',true);
 		$this->payload->services = $service->find();
 	}
 	
-	protected function add_action() {
+	protected function add() {
 		$service = new Model_Service();
 		if ($this->recieved_form_data) {
 			if ($service->save($this->form_data)) {
@@ -31,7 +31,7 @@ class Controller_Services extends Controller_Base {
 		$this->payload->profiles = $service->Profile(array('profile_id'=>'name'));
 		// just display form	
 	}
-	protected function edit_action() {
+	protected function edit() {
 		$service = new Model_Service();
 		if ($this->recieved_form_data) {
 			if ($service->save($this->form_data)) {
@@ -45,7 +45,7 @@ class Controller_Services extends Controller_Base {
 		$this->payload->profiles = $service->Profile(array('profile_id'=>'name'));
 		$this->payload->service = $service->findOne();
 	}
-	protected function delete_action() {
+	protected function delete() {
 		$service = new Model_Service();
 		$service->set('service_id',$this->next_request_segment_value());
 		if ($service->delete()) {
@@ -56,7 +56,7 @@ class Controller_Services extends Controller_Base {
 		}
 		$this->payload->services = $service->find();
 	}
-	protected function over20_action() {
+	protected function over20() {
 		$service = new Model_Service();
 		// could also be: $service->set('active','=',true);
 		$service->set('active',true);

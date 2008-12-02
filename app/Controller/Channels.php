@@ -12,12 +12,12 @@ class Controller_Channels extends Controller_Base {
 	/**
 	 * show list of channels
 	 */
-	protected function default_action() {
+	protected function index() {
 		$channel = new Model_Channel();
 		$this->payload->channels = $channel->find();
 	}
 	
-	protected function add_action() {
+	protected function add() {
 		$channel = new Model_Channel();
 		if ($this->recieved_form_data) {
 			if ($channel->save($this->form_data)) {
@@ -30,7 +30,7 @@ class Controller_Channels extends Controller_Base {
 		$this->payload->profiles = $channel->Profile(array('profile_id'=>'name'));
 		// just display form	
 	}
-	protected function edit_action() {
+	protected function edit() {
 		$channel = new Model_Channel();
 		if ($this->recieved_form_data) {
 			if ($channel->save($this->form_data)) {
@@ -44,7 +44,7 @@ class Controller_Channels extends Controller_Base {
 		$this->payload->profiles = $channel->Profile(array('profile_id'=>'name'));
 		$this->payload->channel = $channel->findOne();
 	}
-	protected function delete_action() {
+	protected function delete() {
 		$channel = new Model_Channel();
 		$channel->set('channel_id',$this->next_request_segment_value());
 		if ($channel->delete()) {
@@ -55,7 +55,7 @@ class Controller_Channels extends Controller_Base {
 		}
 		$this->payload->channels = $channel->find();
 	}
-	protected function over20_action() {
+	protected function over20() {
 		$channel = new Model_Channel();
 		// could also be: $channel->set('active','=',true);
 		$channel->set('active',true);

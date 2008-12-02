@@ -21,11 +21,6 @@ abstract class Controller_Base {
 	protected $router;
 	protected $requested_action = null;
 	
-	
-	
-	
-	
-	
 	protected $feedback = null;
 	
 	// these are ment to be overridden in Controllers
@@ -105,22 +100,7 @@ abstract class Controller_Base {
 			die();
 		}
 	}
-	/**
-	 * get field value for use in a html form.
-	 */
-	protected function form_get($field_name, $echo=true) {
-		$value = '';
-		if(isset($this->form_data[$this->model_name][$field_name])) {
-			$value = $this->form_data[$this->model_name][$field_name];
-		} else if ($this->payload->{$this->model_name}!==null) {
-			$value = array_get_else($this->payload->{$this->model_name},$field_name);
-		}
-		if ($echo) {
-			echo $value;
-		} else {
-			return $value;
-		}
-	}
+
 	/**
 	 * main driver method for a controller
 	 * 
@@ -169,7 +149,7 @@ abstract class Controller_Base {
 	/**
 	 * each controller must define its own default action
 	 */
-	protected abstract function default_action();
+	protected abstract function index();
 	/**
 	 * each controller must define its own init action
 	 * init is called at the end of the Base Controller __constructor
@@ -270,7 +250,7 @@ abstract class Controller_Base {
 	}
 	private function determine_requested_action() {
 		// if we have a leftmost segemnt and it is a action method for this controller
-		$possible_action = isset($this->request_segments[0]) ? str_replace('-','_',$this->request_segments[0]['value']).'_action' : null;
+		$possible_action = isset($this->request_segments[0]) ? str_replace('-','_',$this->request_segments[0]['value']) : null;
 		if($possible_action!==null && method_exists($this,$possible_action)) {
 			$this->requested_action = $possible_action;
 			array_shift($this->request_segments);
@@ -304,7 +284,7 @@ abstract class Controller_Base {
 	 */
 	private function detemine_deepest_template_match() {
 		$deepest_template_file_path = null;
-		$template_path = $this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'/';
+		$template_path = $this->view_dir_name.'/'.$this->requested_action.'/';
 		// look for template starting with all request segments and then working down
 		for($index=count($this->request_segments);$index>=1;$index--) {
 			$segment_names = array_slice($this->request_segments,0,$index);
@@ -321,9 +301,9 @@ abstract class Controller_Base {
 		}
 		// look for a template for the action
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php');
-			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php') ) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.str_replace('_action','',$this->requested_action).'.php');
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.$this->requested_action.'.php');
+			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'/'.$this->requested_action.'.php') ) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.$this->requested_action.'.php');
 			}
 		}
 		// finally look for a template for the contoller

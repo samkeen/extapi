@@ -1,7 +1,7 @@
 <?php
 class Controller_Default extends Controller_Base {
 	
-	protected function default_action() {
+	protected function index() {
 		$this->payload->message = "Hello, this is the default controller";
 		$this->payload->controller = print_r($this,1);
 	}

@@ -30,6 +30,7 @@ class Util_Router {
 		$this->process_request();
 	}
 	public function requested_controller_name() {
+		
 		return $this->requested_controller['name']!==null ? strtolower($this->requested_controller['name']) : CONSTS::$DEFAULT_CONTROLLER;
 	}
 	public function requested_contoller_sub_designation() {

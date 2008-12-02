@@ -1,3 +1,3 @@
-<h1><?php t('This is the Controller Template for PDXt',true) ?></h1>
+<h1><?php th('This is the Controller Template for PDXt') ?></h1>
 <p><?php h($payload->message); ?></p>
 <pre><?php echo $payload->this; ?>

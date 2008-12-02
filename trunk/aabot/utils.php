@@ -68,15 +68,35 @@ function h($text, $echo_output = true) {
  * @param boolean $echo_output
  * @return unknown
  */
-function t($text, $echo_output = false) {
+function t($text, $echo_output = true) {
+	if($echo_output) {
+		$text;
+	} else {
+		return $text;
+	}
+}
+/**
+ * Stub for translation function
+ * Output is html escaped.
+ *
+ * @param string $text
+ * @param boolean $echo_output
+ * @return unknown
+ */
+function th($text, $echo_output = true) {
 	if($echo_output) {
 		h($text);
 	} else {
-		return $text;
+		return h($text,false);
 	}
 }
 
 function http_redirect($path, $code) {
 	header('Location: '.$path);
 	exit();
+}
+
+function controller_for_model($model_name) {
+	$model_name = str_replace('_id','',$model_name);
+	return $model_name.'s';
 }

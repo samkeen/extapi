@@ -6,7 +6,7 @@ class Controller_Factory {
 		global $logger;
 		$requested_controller = $router->requested_controller_name();
 		$controller = null;
-		if ($controller_name = ENV::get_controller_classname($requested_controller)) {
+		if ($controller_name = ENV::get_controller_classname($requested_controller,$router->pre_controller_path())) {
 			$logger->debug(__METHOD__.' Invoking Controller [' . $controller_name . ']');
 			$controller = new $controller_name($router);
 		} else {

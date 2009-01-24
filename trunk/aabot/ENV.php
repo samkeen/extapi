@@ -36,7 +36,8 @@ final class ENV {
 		global $PATH__APP_ROOT, $logger;
 		$controller_classname = null;
 		$requested_controller_name = self::classifyName($requested_controller_name);
-		$requested_controller_file = self::determine_app_or_framework_for_file(CONSTS::CONTROLLER_DIR.$relative_path.$requested_controller_name.'.php');
+		$requested_controller_file = self::determine_app_or_framework_for_file(
+                CONSTS::CONTROLLER_DIR.'/'.$relative_path.'/'.$requested_controller_name.'.php');
 		if($requested_controller_file!==null) {
 			$controller_classname = "Controller_".$requested_controller_name;
 			require($requested_controller_file);
@@ -44,7 +45,7 @@ final class ENV {
 //				.'/'.CONSTS::CONTROLLER_DIR.$relative_path.PATH_SEPARATOR.ini_get('include_path'));
 		} else {
 			$logger->warn(__METHOD__.'  controller file requested ['.$PATH__APP_ROOT
-				.'/'.CONSTS::CONTROLLER_DIR.'/'.$requested_controller_name.'.php'.'] does not exist');
+				.'/'.CONSTS::CONTROLLER_DIR.'/'.$relative_path.'/'.$requested_controller_name.'.php'.'] does not exist');
 		}
 		return $controller_classname;
 	}

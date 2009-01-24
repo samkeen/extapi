@@ -8,7 +8,7 @@ abstract class Controller_Base {
 	public $name;
 	
 //	protected $request_context;
-//	protected $request_segments = null;
+	protected $request_segments = null;
 	// resp type the user explicitly requested
 //	protected $requested_response_type = null;
 	// resp type to fall back to if none explicitly requested 
@@ -52,7 +52,7 @@ abstract class Controller_Base {
 		
 		$this->default_response_type = CONSTS::$RESPONSE_GLOBAL_DEFAULT;
 		$this->request_method = $this->router->request_method;
-		$this->detect_recieved_data();
+		$this->process_recieved_data();
 //		die($this->router->requested_controller_name().__FILE__.__LINE__.' Trouble Here:	 $this->view_dir_name = $this->router->requested_controller_name(); ');
 		$this->view_dir_name = $this->router->controller;
 		$this->set_model_name();
@@ -60,33 +60,24 @@ abstract class Controller_Base {
 		$this->payload = new SimpleDTO();
 		$this->init();
 	}
-
-    /**
-     * pass unknown get's down to Router
-     * @param string $name
-     * @return void
-     */
-    public function  __get($name) {
-        return $this->router->{$name};
-    }
-//	/**
-//	 * shift off the next request segment if it exists
-//	 */
-//	protected function next_request_segment() {
-//		return isset($this->request_segments[0]) ? array_shift($this->request_segments) : null;
-//	}
-//	/**
-//	 * shift off the next request segment value if it exists
-//	 * throws away the sub designation value
-//	 */
-//	protected function next_request_segment_value() {
-//		$next_segment = null;
-//		if (isset($this->request_segments[0])) {
-//			$next_segment = array_shift($this->request_segments);
-//			$next_segment = $next_segment['value'];
-//		}
-//		return $next_segment;
-//	}
+	/**
+	 * shift off the next request segment if it exists
+	 */
+	protected function next_request_segment() {
+		return isset($this->request_segments[0]) ? array_shift($this->request_segments) : null;
+	}
+	/**
+	 * shift off the next request segment value if it exists
+	 * throws away the sub designation value
+	 */
+	protected function next_request_segment_value() {
+		$next_segment = null;
+		if (isset($this->request_segments[0])) {
+			$next_segment = array_shift($this->request_segments);
+			$next_segment = $next_segment['value'];
+		}
+		return $next_segment;
+	}
 	/**
 	 * allow a controller init method or action to declare it does not return a view.
 	 */
@@ -257,17 +248,25 @@ abstract class Controller_Base {
 		$this->$the_action();
 	}
 	private function determine_requested_action() {
-		$possible_action = $this->router->action;
+		// if we have a leftmost segemnt and it is a action method for this controller
+		$possible_action = isset($this->request_segments[0]) ? str_replace('-','_',$this->request_segments[0]['value']) : null;
+//		die($possible_action); #### the above doesn't work anymore
 		if($possible_action!==null && method_exists($this,$possible_action)) {
 			$this->requested_action = $possible_action;
+			array_shift($this->request_segments);
 			$this->logger->debug(__METHOD__.'  Action was found to be: '.$this->requested_action);	
 		} else { // use the default action
-			if (!empty($this->router->action)) { // non-existant action so 404
-                $this->logger->warn(__METHOD__.'  Did not find requested Action['.$possible_action.'] Sending to File not found');
-            } else { // no requested action so use default
-                $this->requested_action = CONSTS::$DEFAULT_ACTION;
-                $this->logger->debug(__METHOD__.' No action supplied, using default action ['.CONSTS::$DEFAULT_ACTION.']');
-            }
+			if ($this->logger->debug()) {
+				if (isset($this->request_segments[0])) {
+					var_dump($this);
+					die(__METHOD__.'  Did not find requested Action['.$possible_action.']');
+					$this->requested_action = CONSTS::$DEFAULT_ACTION;
+					$this->logger->debug(__METHOD__.'  Did not find requested Action['.$possible_action.'] Sending to File not found');	
+				} else {
+					$this->requested_action = CONSTS::$DEFAULT_ACTION;
+					$this->logger->debug(__METHOD__.' No action supplied, using default action ['.CONSTS::$DEFAULT_ACTION.']');
+				}
+			}
 		}
 	}
 	private function set_template_for_action() {
@@ -289,8 +288,8 @@ abstract class Controller_Base {
 		$deepest_template_file_path = null;
 		$template_path = $this->router->pre_controller_path().$this->view_dir_name.'/'.$this->requested_action.'/';
 		// look for template starting with all request segments and then working down
-		for($index=count($this->router->request_path_segments);$index>=1;$index--) {
-			$segment_names = array_slice($this->router->request_path_segments,0,$index);
+		for($index=count($this->request_segments);$index>=1;$index--) {
+			$segment_names = array_slice($this->request_segments,0,$index);
 			$segments = array();
 			foreach ($segment_names as $name) {
 				$segments[] = $name['value'];
@@ -337,7 +336,7 @@ abstract class Controller_Base {
 	/**
 	 * @todo include form tokens
 	 */
-	private function detect_recieved_data() {
+	private function process_recieved_data() {
 		if (count($_POST) && isset($_POST['__method'])) {
 			$this->recieved_form_data = true;
 			$this->form_data = $_POST;

@@ -4,9 +4,9 @@ class Controller_Factory {
 	
 	public static function get_instance(Util_Router $router) {
 		global $logger;
-		$requested_controller = $router->requested_controller_name();
-		$controller = null;
-		if ($controller_name = ENV::get_controller_classname($requested_controller,$router->pre_controller_path())) {
+		$requested_controller = $router->controller;
+        $controller = null;
+		if ($controller_name = ENV::get_controller_classname($requested_controller,$router->context)) {
 			$logger->debug(__METHOD__.' Invoking Controller [' . $controller_name . ']');
 			$controller = new $controller_name($router);
 		} else {

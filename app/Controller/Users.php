@@ -12,7 +12,7 @@ class Controller_Users extends Controller_Base {
 	/**
 	 * show list of users
 	 */
-	protected function index() {
+	protected function admin__index() {
 		$user = new Model_User();
 		$this->payload->users = $user->find();
 	}

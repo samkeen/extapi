@@ -132,7 +132,7 @@ abstract class Controller_Base {
 	/**
 	 * each controller must define its own default action
 	 */
-	protected abstract function index();
+//	protected abstract function index();
 	/**
 	 * each controller must define its own init action
 	 * init is called at the end of the Base Controller __constructor
@@ -240,8 +240,8 @@ abstract class Controller_Base {
 			if (!empty($this->router->action)) { // non-existant action so 404
                 $this->logger->warn(__METHOD__.'  Did not find requested Action['.$possible_action.'] Sending to File not found');
             } else { // no requested action so use default
-                $this->requested_action = CONSTS::$DEFAULT_ACTION;
-                $this->logger->debug(__METHOD__.' No action supplied, using default action ['.CONSTS::$DEFAULT_ACTION.']');
+                $this->requested_action = $this->router->context ? $this->router->context.'__'.CONSTS::$DEFAULT_ACTION:CONSTS::$DEFAULT_ACTION;
+                $this->logger->debug(__METHOD__.' No action supplied, using default action ['.$this->requested_action .']');
             }
 		}
 	}
@@ -281,16 +281,22 @@ abstract class Controller_Base {
 		}
 		// look for a template for the action
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.$this->requested_action.'.php');
-			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'/'.$this->requested_action.'.php') ) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.$this->requested_action.'.php');
+            $file_path = $this->router->context !== null
+                ? $this->router->context .'/'.$this->view_dir_name.'/'.str_replace($this->router->context.'__', '', $this->requested_action).'.php'
+                : $this->view_dir_name.'/'.$this->requested_action.'.php';
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$file_path);
+			if ($deepest_template_file_path = ENV::get_template_path($file_path) ) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$file_path);
 			}
 		}
 		// finally look for a template for the contoller
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
-			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'.php')) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match[controller]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
+            $file_path = $this->router->context !== null
+                ? $this->router->context .'/'.$this->view_dir_name.'.php'
+                : $this->view_dir_name.'.php';
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$file_path);
+			if ($deepest_template_file_path = ENV::get_template_path($file_path)) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[controller]: '.ENV::PATH('TEMPLATE_DIR','/').$file_path);
 			}
 		}
 		return $deepest_template_file_path;

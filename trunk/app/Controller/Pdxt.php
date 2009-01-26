@@ -36,7 +36,7 @@ class Controller_Pdxt extends Controller_Base {
 		
 	}
 	protected function register() {
-		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/zeep');
+		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/zeep', $this->router);
 		$this->payload->zeep_channel = $sms_channel->config();
 		$this->payload->user_id = 'samkeen';
 	}
@@ -75,7 +75,7 @@ class Controller_Pdxt extends Controller_Base {
 		$requesting_channel = $this->next_request_segment_value();
 		header('Content-type: text/plain',true);
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
-		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
+		$sms_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel, $this->router);
 		if ($sms_channel && $sms_channel->have_required_request_params() && $sms_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');
 			$tmet_service = new Extapi_Service_Tmet($sms_channel);
@@ -116,7 +116,7 @@ extapi.com/pdxt/xmpp/receiver/x2http.xml?from=sam.sjk%40gmail.com&to=pdxtt%40ext
 		$this->use_layout = false;
 		$requesting_channel = $this->next_request_segment_value();
 		ENV::$log->debug('$_REQUEST'.print_r($_REQUEST,1));
-		$xmpp_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel);
+		$xmpp_channel = Util_VendorFactory::get_instance('extapi/channel/'.$requesting_channel, $this->router);
 		
 		if ($xmpp_channel && $xmpp_channel->have_required_request_params() && $xmpp_channel->authenticate_request()) {
 			ENV::load_vendor_file('Extapi/Service/Tmet');

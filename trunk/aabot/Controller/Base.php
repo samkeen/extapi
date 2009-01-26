@@ -48,12 +48,9 @@ abstract class Controller_Base {
 		$this->router = $router;
 		$this->name = strtolower(str_replace('Controller_','',get_class($this)));
 		
-//		$this->request_segments = $this->router->request_segments();
-		
 		$this->default_response_type = CONSTS::$RESPONSE_GLOBAL_DEFAULT;
 		$this->request_method = $this->router->request_method;
 		$this->detect_recieved_data();
-//		die($this->router->requested_controller_name().__FILE__.__LINE__.' Trouble Here:	 $this->view_dir_name = $this->router->requested_controller_name(); ');
 		$this->view_dir_name = $this->router->controller;
 		$this->set_model_name();
 		
@@ -69,24 +66,6 @@ abstract class Controller_Base {
     public function  __get($name) {
         return $this->router->{$name};
     }
-//	/**
-//	 * shift off the next request segment if it exists
-//	 */
-//	protected function next_request_segment() {
-//		return isset($this->request_segments[0]) ? array_shift($this->request_segments) : null;
-//	}
-//	/**
-//	 * shift off the next request segment value if it exists
-//	 * throws away the sub designation value
-//	 */
-//	protected function next_request_segment_value() {
-//		$next_segment = null;
-//		if (isset($this->request_segments[0])) {
-//			$next_segment = array_shift($this->request_segments);
-//			$next_segment = $next_segment['value'];
-//		}
-//		return $next_segment;
-//	}
 	/**
 	 * allow a controller init method or action to declare it does not return a view.
 	 */
@@ -195,7 +174,7 @@ abstract class Controller_Base {
 			$feedback = $this->feedback;
 			include($this->layout_file);
 		}
-		if (ENV::debug_active() && Util_Router::debug_requested()) {
+		if (ENV::debug_active() && $this->router->debug_requested) {
 			include(ENV::get_template_path('blocks/debug'));
 		}
 		if($return_as_string) {
@@ -287,15 +266,17 @@ abstract class Controller_Base {
 	 */
 	private function detemine_deepest_template_match() {
 		$deepest_template_file_path = null;
-		$template_path = $this->router->pre_controller_path().$this->view_dir_name.'/'.$this->requested_action.'/';
+
+        // rempliment match to arguments files
+		$template_path = $this->view_dir_name.'/'.$this->router->action.'/';
+        $template_path = str_replace('//', '/', $template_path);
+        $request_file_path_segments = $this->router->request_path_segments;
+        // remove context
+        unset ($request_file_path_segments[$this->router->context]);
 		// look for template starting with all request segments and then working down
-		for($index=count($this->router->request_path_segments);$index>=1;$index--) {
-			$segment_names = array_slice($this->router->request_path_segments,0,$index);
-			$segments = array();
-			foreach ($segment_names as $name) {
-				$segments[] = $name['value'];
-			}
-			$possible_template_file = $template_path.implode('/',$segments).".php";
+		for($index=count($this->router->arguments);$index>=1;$index--) {
+			$segment_names = array_slice($this->router->arguments,0,$index);
+			$possible_template_file = $template_path.implode('/',$segment_names).".php";
 			$this->logger->debug(__METHOD__.' trying template match for: '.$possible_template_file);
 			if ($deepest_template_file_path = ENV::get_template_path($possible_template_file)) {
 				$this->logger->debug(__METHOD__.' Found deepest template file match: '.$possible_template_file);
@@ -304,16 +285,16 @@ abstract class Controller_Base {
 		}
 		// look for a template for the action
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->router->pre_controller_path().$this->view_dir_name.'/'.$this->requested_action.'.php');
-			if ($deepest_template_file_path = ENV::get_template_path($this->router->pre_controller_path().$this->view_dir_name.'/'.$this->requested_action.'.php') ) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->router->pre_controller_path().$this->view_dir_name.'/'.$this->requested_action.'.php');
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.$this->requested_action.'.php');
+			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'/'.$this->requested_action.'.php') ) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[action]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'/'.$this->requested_action.'.php');
 			}
 		}
 		// finally look for a template for the contoller
 		if ( ! $deepest_template_file_path) {
-			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->router->pre_controller_path().$this->view_dir_name.'.php');
-			if ($deepest_template_file_path = ENV::get_template_path($this->router->pre_controller_path().$this->view_dir_name.'.php')) {
-				$this->logger->debug(__METHOD__.' Found deepest template file match[controller]: '.ENV::PATH('TEMPLATE_DIR','/').$this->router->pre_controller_path().$this->view_dir_name.'.php');
+			$this->logger->debug(__METHOD__.' trying template match for: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
+			if ($deepest_template_file_path = ENV::get_template_path($this->view_dir_name.'.php')) {
+				$this->logger->debug(__METHOD__.' Found deepest template file match[controller]: '.ENV::PATH('TEMPLATE_DIR','/').$this->view_dir_name.'.php');
 			}
 		}
 		return $deepest_template_file_path;
@@ -325,8 +306,8 @@ abstract class Controller_Base {
 		if ($this->layout_file===null && $this->use_layout) {
 			$layout_dir = ENV::PATH('LAYOUT_DIR','/');
 			$lib_layout_dir = ENV::PATH('LIB_LAYOUT_DIR','/');
-			if (file_exists($layout_dir . $this->router->pre_controller_path().$this->view_dir_name . '.php')) {
-				$this->layout_file = $layout_dir . $this->router->pre_controller_path().$this->view_dir_name . '.php';
+			if (file_exists($layout_dir.$this->view_dir_name . '.php')) {
+				$this->layout_file = $layout_dir .$this->view_dir_name . '.php';
 			} else {
 				$this->layout_file = file_exists($layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php')
 					? $layout_dir . CONSTS::$DEFAULT_LAYOUT . '.php'
@@ -344,7 +325,7 @@ abstract class Controller_Base {
 		}
 	}
 	public function get_response_type() {
-		return $this->router->requested_response_type();
+		return $this->router->response_type;
 	}
 }
 ?>

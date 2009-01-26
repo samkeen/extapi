@@ -45,7 +45,7 @@ class Controller_Users extends Controller_Base {
 			}
 		}
 		$user = new Model_User();
-		$user->set('user_id',$this->next_request_segment_value());
+		$user->set('user_id',$this->arguments__first);
 		$this->payload->user = $user->findOne();
 	}
 	protected function delete() {

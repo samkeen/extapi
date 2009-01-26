@@ -68,7 +68,8 @@ class Util_Router {
     
     private $getable_attributes = array(
         'protocol','subdomain','domain','context','controller','action','arguments',
-        'request_method','response_type', 'request_path_segments'
+        'request_method','response_type', 'request_path_segments', 'parameters',
+        'debug_requested'
     );
     private $setable_attributes = array(
         'controller','action'
@@ -81,8 +82,11 @@ class Util_Router {
         self::ARGUMENT => array()
     );
 
+    private $custom_routes;
+    private $custom_contexts;
     private $request_method; //POST, PUT, DELETE, GET, ...
     private $response_type; // ex: htm, rss, txt, ...
+    private $debug_requested = false;
 
     const REDIRECT_VAR = ';c;';
     const PATH_SEPARATOR = '/';
@@ -91,21 +95,21 @@ class Util_Router {
 
     private $strip_from_request = array(self::REDIRECT_VAR=>null);
 
-    private static $debug_requested = false;
-	
-	public function __construct(array $custom_routes = null) {
+	public function __construct(array $custom_routes = null, $custom_contexts = null) {
         $this->custom_routes = $custom_routes;
+        $this->custom_contexts = $custom_contexts;
+
         $this->protocol = array_get_else($_SERVER, 'SERVER_PROTOCOL');
         $domain_parts = array_reverse(explode('.', array_get_else($_SERVER, 'HTTP_HOST')));
         $this->subdomain = array_get_else($domain_parts, 2);
         $this->domain = $domain_parts[1].'.'.$domain_parts[0];
+
         $this->process_request(array_get_else($_GET, self::REDIRECT_VAR, '/'));
         $this->request_method = $this->determine_request_method();
         $this->determine_requested_response_type();
 
-        $this->parameters = array_diff_key($_REQUEST,$this->strip_from_request);
-        self::$debug_requested = isset($this->request_parameters['debug']);
-        
+        $this->parameters = array_diff_key($_GET,$this->strip_from_request);
+        $this->debug_requested = isset($this->parameters['debug'])&&$this->parameters['debug'];
 	}
 
     /**
@@ -152,11 +156,14 @@ class Util_Router {
     }
     private function process_request($app_portion_of_uri) {
 		global $PATH__APP_ROOT; // ie: "/Library/WebServer/Documents/extapi/app"
-        $this->request_path_segments = explode(self::PATH_SEPARATOR, $app_portion_of_uri);
+        if(key_exists($app_portion_of_uri, $this->custom_routes)) {
+            $app_portion_of_uri = $this->custom_routes[$app_portion_of_uri];
+        }
+        $this->request_path_segments = explode(self::PATH_SEPARATOR, trim($app_portion_of_uri,' /'));
         foreach ($this->request_path_segments as $segemnt_index => $request_path_segment) {
             // if context is not already set, check for it
             $segment_parts = $this->get_segment_with_suffix_parts($request_path_segment);
- 			if (! $this->context && is_dir($PATH__APP_ROOT.'/'.CONSTS::CONTROLLER_DIR.'/'.$segment_parts['value'])) {
+            if (! $this->context && ! $this->controller && in_array($segment_parts['value'],$this->custom_contexts)) {
                 $this->context = $this->record_request_segment(self::CONTEXT, $request_path_segment);
             // set the $requested_url_controller_index to the first non dir in the request path
             } else if(! $this->controller) {
@@ -286,51 +293,5 @@ class Util_Router {
         }
         return null;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	public function requested_controller_name() {
-		return $this->requested_controller['name']!==null ? strtolower($this->requested_controller['name']) : CONSTS::$DEFAULT_CONTROLLER;
-	}
-	public function requested_contoller_sub_designation() {
-		return $this->requested_controller['sub_designation'];
-	}
-	
-	public function pre_controller_path() {
-		return $this->pre_controller_path;
-	}
-	public function request_segments() {
-		return $this->requested_url_segments;
-	}
-	public function requested_response_type() {
-		return $this->requested_response_type;
-	}
-	public function request_method() {
-		return $this->request_method;
-	}
-	
-	public static function request_params() {
-		return self::$request_parameters;
-	}
-	public static function debug_requested() {
-		return self::$debug_requested;
-	}
-	
-
 }
 ?>

@@ -6,11 +6,7 @@ abstract class Controller_Base {
 	public $recieved_form_data = false;
 	public $form_data = array();
 	public $name;
-	
-//	protected $request_context;
-//	protected $request_segments = null;
-	// resp type the user explicitly requested
-//	protected $requested_response_type = null;
+
 	// resp type to fall back to if none explicitly requested 
 	protected $default_response_type = null;
 	protected $request_method = null;

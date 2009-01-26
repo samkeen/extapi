@@ -110,6 +110,7 @@ class Util_Router {
 
         $this->parameters = array_diff_key($_GET,$this->strip_from_request);
         $this->debug_requested = isset($this->parameters['debug'])&&$this->parameters['debug'];
+//        var_dump($this);die;
 	}
 
     /**
@@ -162,7 +163,7 @@ class Util_Router {
         $this->request_path_segments = explode(self::PATH_SEPARATOR, trim($app_portion_of_uri,' /'));
         foreach ($this->request_path_segments as $segemnt_index => $request_path_segment) {
             // if context is not already set, check for it
-            $segment_parts = $this->get_segment_with_suffix_parts($request_path_segment);
+            $segment_parts = $this->get_segment_value_suffix_parts($request_path_segment);
             if (! $this->context && ! $this->controller && in_array($segment_parts['value'],$this->custom_contexts)) {
                 $this->context = $this->record_request_segment(self::CONTEXT, $request_path_segment);
             // set the $requested_url_controller_index to the first non dir in the request path
@@ -224,28 +225,18 @@ class Util_Router {
         $segemnt_value = null;
         if(is_array($request_path_segment)) {
             foreach ($request_path_segment as $index => $argument_segment_value) {
-                if ($segment_parts = $this->get_segment_with_suffix_parts($argument_segment_value)) { // if  delimiter was found
-                    $segemnt_value[] = $segment_parts['value'];
-                    $this->request_segment_suffixes[self::ARGUMENT][] = $segment_parts['suffix'];
-                } else { // no delimiter, but still want to set null for each names argument
-                    $segemnt_value[] = $argument_segment_value;
-                    $this->request_segment_suffixes[self::ARGUMENT][] = null;
-                }
+                $segment_parts = $this->get_segment_value_suffix_parts($argument_segment_value);
+                $segemnt_value[] = $segment_parts['value'];
+                $this->request_segment_suffixes[self::ARGUMENT][] = $segment_parts['suffix'];
             }
         } else {
-            if ($segment_parts = $this->get_segment_with_suffix_parts($request_path_segment)) { // if  delimiter was found
-                if($segemnt_type==self::ARGUMENT) {
-                    $segemnt_value = $segment_parts['value'];
-                    $this->request_segment_suffixes[self::ARGUMENT][] = $segment_parts['suffix'];
-                } else {
-                    $segemnt_value = $segment_parts['value'];
-                    $this->request_segment_suffixes[$segemnt_type] = $segment_parts['suffix'];
-                }
-            } else { // no delimiter, but still want to set null for each names argument
-                $segemnt_value = $request_path_segment;
-                if($segemnt_type==self::ARGUMENT) {
-                    $this->request_segment_suffixes[self::ARGUMENT][$segemnt_value] = null;
-                }
+            $segment_parts = $this->get_segment_value_suffix_parts($request_path_segment);
+            if($segemnt_type==self::ARGUMENT) {
+                $segemnt_value = $segment_parts['value'];
+                $this->request_segment_suffixes[self::ARGUMENT][] = $segment_parts['suffix'];
+            } else {
+                $segemnt_value = $segment_parts['value'];
+                $this->request_segment_suffixes[$segemnt_type] = $segment_parts['suffix'];
             }
         }
         return $segemnt_value;
@@ -259,14 +250,10 @@ class Util_Router {
      * @param string  $request_segment_string  ex: 'view.json'
      * @return array ex: array('value' => 'view', 'suffix' => 'rss') || false if no suffix found
      */
-    private function get_segment_with_suffix_parts($request_segment_string) {
+    private function get_segment_value_suffix_parts($request_segment_string) {
         $parts = pathinfo($request_segment_string);
-        if( ! isset($parts['extension'])) {
-            $segment_parts = false;
-        } else {
-            $segment_parts['value'] = array_get_else($parts, 'filename');
-            $segment_parts['suffix'] = $parts['extension'];
-        }
+        $segment_parts['value'] = array_get_else($parts, 'filename');
+        $segment_parts['suffix'] = array_get_else($parts, 'extension');
         return $segment_parts;
     }
 

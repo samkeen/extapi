@@ -28,7 +28,7 @@ class Controller_Users extends Controller_Base {
 			$user = new Model_User();
 			if ($user->save($this->form_data)) {
 				$this->feedback = "The User has been created";
-				$this->redirect('/users');
+				$this->redirect('/admin/users');
 			} else {
 				$this->feedback = "There was a problem creating the user";
 			}
@@ -50,10 +50,10 @@ class Controller_Users extends Controller_Base {
 	}
 	protected function admin__delete() {
 		$user = new Model_User();
-		$user->set('user_id',$this->next_request_segment_value());
+		$user->set('user_id',$this->arguments__first);
 		if ($user->delete()) {
 			$this->feedback = "The User has been deleted";
-			$this->redirect('/users');
+			$this->redirect('/admin/users');
 		} else {
 			$this->feedback = "There was a problem deleting this user";
 		}

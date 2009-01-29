@@ -233,6 +233,7 @@ abstract class Controller_Base {
 	}
 	private function determine_requested_action() {
 		$possible_action = $this->router->action;
+        $possible_action = $this->router->context!==null ? $this->router->context.'__'.$possible_action: $possible_action;
 		if($possible_action!==null && method_exists($this,$possible_action)) {
 			$this->requested_action = $possible_action;
 			$this->logger->debug(__METHOD__.'  Action was found to be: '.$this->requested_action);	
@@ -262,7 +263,6 @@ abstract class Controller_Base {
 	 */
 	private function detemine_deepest_template_match() {
 		$deepest_template_file_path = null;
-
         // rempliment match to arguments files
 		$template_path = $this->view_dir_name.'/'.$this->router->action.'/';
         $template_path = str_replace('//', '/', $template_path);
@@ -280,7 +280,7 @@ abstract class Controller_Base {
 			}
 		}
 		// look for a template for the action
-		if ( ! $deepest_template_file_path) {
+		if ( ! $deepest_template_file_path) { 
             $file_path = $this->router->context !== null
                 ? $this->router->context .'/'.$this->view_dir_name.'/'.str_replace($this->router->context.'__', '', $this->requested_action).'.php'
                 : $this->view_dir_name.'/'.$this->requested_action.'.php';

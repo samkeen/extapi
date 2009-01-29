@@ -1,3 +1,4 @@
+<?php $payload->title = "List of Users"; ?>
 <h1>Users</h1>
 <table>
 <tr>
@@ -9,8 +10,8 @@
 <td><?php h($user['xmpp_jid']); ?></td>
 <td><?php h($user['age']); ?></td>
 <td><?php h($user['active']?'Y':'N'); ?></td>
-<td><a href="/users/view/<?php h($user['user_id']); ?>">view</a> :<a href="/users/edit/<?php h($user['user_id']); ?>">edit</a> : <a href="/users/delete/<?php h($user['user_id']); ?>">delete</a></td>
+<td><a href="/admin/users/view/<?php h($user['user_id']); ?>">view</a> :<a href="/admin/users/edit/<?php h($user['user_id']); ?>">edit</a> : <a href="/admin/users/delete/<?php h($user['user_id']); ?>">delete</a></td>
 </tr>
 <?php } ?>
 </table>
-<a href="/users/add">Add User</a>
+<a href="/admin/users/add">Add User</a>

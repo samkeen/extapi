@@ -17,5 +17,9 @@ class SimpleDTO {
 	public function __set($key, $value) {
 		$this->base_attributes[$key] = $value;
 	}
+
+    public function dump_attributes() {
+        return $this->base_attributes;
+    }
 }
 ?>

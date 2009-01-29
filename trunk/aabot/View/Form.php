@@ -11,13 +11,13 @@ class View_Form {
 		$this->controller = $controller;
 	}
 	
-	public function create($model_name, $action) {
-		$this->form_action = strtolower($action);
+	public function create($model_name, $action = null) {
+		$this->form_action = $action != null ? strtolower($action) : $this->controller->action;
 		$this->model_name = strtolower($model_name);
 		$this->model_id_name = $this->model_name.'_id';
-		$this->controller_name = strtolower(controller_for_model($model_name));
+        $relative_action_url = ltrim(implode('/',array($this->controller->context,$this->controller->name,$this->controller->action)),'/');
 		// <form action="/channels/add" method="post" accept-charset="utf8">
-		echo '<form action="/'.$this->controller->name.'/'.$action.'" method="post" accept-charset="utf8">'."\n";
+		echo '<form action="/'.$relative_action_url.'" method="post" accept-charset="utf8">'."\n";
 	}
 	public function close($submit_button_label=null) {
 		// <p><input type="submit" name="submit" value="submit" /><input type="hidden" name="__method" value="post" /></p>

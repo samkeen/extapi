@@ -156,8 +156,10 @@ class Util_Router {
         return $argument;
     }
     private function process_request($app_portion_of_uri) {
+        $app_portion_of_uri = '/'.ltrim($app_portion_of_uri, ' /');
 		global $PATH__APP_ROOT; // ie: "/Library/WebServer/Documents/extapi/app"
         if(key_exists($app_portion_of_uri, $this->custom_routes)) {
+            ENV::$log->debug(__METHOD__.' Found custom route ['.$this->custom_routes[$app_portion_of_uri].'] for original request ['.$app_portion_of_uri.']');
             $app_portion_of_uri = $this->custom_routes[$app_portion_of_uri];
         }
         $this->request_path_segments = explode(self::PATH_SEPARATOR, trim($app_portion_of_uri,' /'));

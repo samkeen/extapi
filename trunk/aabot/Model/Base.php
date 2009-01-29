@@ -118,8 +118,8 @@ abstract class Model_Base {
 		$this->set_field_values($submitted_data);
 		if ($this->have_data_to_save()) {
 			$save_statement = $this->is_new_model() 
-				? $this->build_update_statement() 
-				: $this->build_insert_statement();
+				? $this->build_insert_statement()
+				: $this->build_update_statement();
 			ENV::$log->debug(__METHOD__.' built save QUERY: '.$save_statement);
 			$statement = null;
 			try {
@@ -130,7 +130,7 @@ abstract class Model_Base {
 				foreach ($this->field_values as $field_name => $field_value) {
 					 $statement->bindValue(':'.$field_name, $field_value);
 				}
-				if ($this->is_new_model()) {
+				if ( ! $this->is_new_model()) {
 					$statement->bindValue(':'.$this->model_id_name, $this->id);
 				}
 				$rows_affected = $statement->execute();
@@ -167,7 +167,7 @@ abstract class Model_Base {
 	 * various field values on the model prior to calling this method
 	 */
 	public function find(array $field_values = null) {
-		$result = null;
+        $result = null;
 		$this->set_field_values($field_values);
 		// SELECT b, d FROM foo WHERE `b` = :b AND `d` = :d
 		$find_statement = 
@@ -294,7 +294,7 @@ abstract class Model_Base {
 		return (boolean)count($this->field_values);
 	}
 	private function is_new_model() {
-		return $this->id !== null;
+		return $this->id === null;
 	}
 	protected function field_values($key_name=null) {
 		$return = null;

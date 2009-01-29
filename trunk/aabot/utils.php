@@ -70,7 +70,7 @@ function h($text, $echo_output = true) {
  */
 function t($text, $echo_output = true) {
 	if($echo_output) {
-		$text;
+		echo $text;
 	} else {
 		return $text;
 	}

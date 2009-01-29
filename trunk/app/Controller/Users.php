@@ -17,13 +17,13 @@ class Controller_Users extends Controller_Base {
 		$this->payload->users = $user->find();
 	}
 
-	protected function view() {
+	protected function admin__view() {
 		$user = new Model_User();
 		$user->set('user_id',$this->arguments__first);
 		$this->payload->user = new SimpleDTO($user->findOne());
 	}
 	
-	protected function add() {
+	protected function admin__add() {
 		if ($this->recieved_form_data) {
 			$user = new Model_User();
 			if ($user->save($this->form_data)) {
@@ -34,12 +34,12 @@ class Controller_Users extends Controller_Base {
 			}
 		}	
 	}
-	protected function edit() {
+	protected function admin__edit() {
 		if ($this->recieved_form_data) {
 			$user = new Model_User();
 			if ($user->save($this->form_data)) {
 				$this->feedback = "The User has been updated";
-				$this->redirect('/users');
+				$this->redirect('/admin/users');
 			} else {
 				$this->feedback = "There was a problem creating your account";
 			}
@@ -48,7 +48,7 @@ class Controller_Users extends Controller_Base {
 		$user->set('user_id',$this->arguments__first);
 		$this->payload->user = $user->findOne();
 	}
-	protected function delete() {
+	protected function admin__delete() {
 		$user = new Model_User();
 		$user->set('user_id',$this->next_request_segment_value());
 		if ($user->delete()) {
@@ -59,12 +59,12 @@ class Controller_Users extends Controller_Base {
 		}
 		$this->payload->users = $user->find();
 	}
-	protected function over20() {
+	protected function admin__over20() {
 		$user = new Model_User();
 		// could also be: $user->set('active','=',true);
 		$user->set('active',true);
 		$user->set('age','>','20');
-		$this->set_template('users/default');
+		$this->set_template('admin/users/index');
 		$this->payload->users = $user->find();
 	}
 }

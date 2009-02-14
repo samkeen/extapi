@@ -45,12 +45,18 @@ class View_Form {
     /**
      *
      * @param <type> $select_name ex: 'User.group' OR 'group' (User implied in that case)
-     * @param <type> $selected
-     * @param <type> $items
-     * @param <type> $top_option_label
-     * @param <type> $attibutes_string
+     * @param array $options
+     *  - selected
+     *  - items
+     *  - top
+     *  - attributes
      */
-	public function select($select_name, $selected=null, $items=array(), $top_option_label=null, $attibutes_string=null) {
+	public function select($select_name, $options = array()) {
+        $selected = array_get_else($options, 'selected');
+        $items = array_get_else($options, 'items');
+        $top_option_label = array_get_else($options, 'top');
+        $attibutes_string = array_get_else($options, 'attributes');
+        
 		$names = $this->model_field_names($select_name);
 		$name = "{$names['model']}[{$names['field']}]";
 		$id = "{$names['model']}-{$names['field']}";

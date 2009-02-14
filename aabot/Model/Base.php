@@ -167,11 +167,22 @@ abstract class Model_Base {
 	 * various field values on the model prior to calling this method
 	 */
 	public function find(array $field_values = null) {
+        return $this->_find($field_values);
+    }
+    /**
+	 *
+	 * @param array $field_values {optional, we could have set the
+	 * various field values on the model prior to calling this method
+     * @param string $table_to_query if given we query that table not
+     * the one belonging to this model (for internal use only)
+	 */
+    private function _find(array $field_values = null, $table_to_query = null) {
         $result = null;
 		$this->set_field_values($field_values);
+        $table = $table_to_query!==null ? "`$table_to_query`" : "`{$this->model_name}`";
 		// SELECT b, d FROM foo WHERE `b` = :b AND `d` = :d
 		$find_statement = 
-			'SELECT * FROM '.$this->model_name.$this->build_where_clause();
+			'SELECT * FROM '.$table.$this->build_where_clause();
 		ENV::$log->debug(__METHOD__.' built find QUERY: '.$find_statement);
 		try {
 			$statement = $this->db_handle->prepare($find_statement);
@@ -193,6 +204,16 @@ abstract class Model_Base {
 		$one = $this->find($field_values);
 		return isset($one[0]) ? $one[0] : null;
 	}
+    public function lookup_list($related_model=null) {
+        // if $related_model is null, return for this model
+        if($related_model===null) {
+            $results = $this->_find();
+        } else {
+            $results = $this->_find(null,$related_model);
+
+        }
+        return $this->apply_return_structure(array('id'=>'name'), $results);
+    }
 	/**
 	 * ex: 
 	 * return structure is: array('user_id'=>array('username','age'));

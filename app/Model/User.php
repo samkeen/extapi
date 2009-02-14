@@ -10,7 +10,14 @@ class Model_User extends Model_Base {
 		'active' => 'boolean'
 	);
 	protected $relations = array (
-		'has_many' => 'Profile'
+		'has_and_belongs_to_many' => array(
+            'group' => array(
+                'conditions' => array(
+                    'is_active'
+                )
+            )
+
+        )
 	);
 
 }

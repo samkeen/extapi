@@ -12,13 +12,13 @@ class Controller_Profiles extends Controller_Base {
 	/**
 	 * show list of profiles
 	 */
-	protected function index() {
+	protected function admin__index() {
 		$profile = new Model_Profile();
 		//$profile->set('active',true);
 		$this->payload->profiles = $profile->find();
 	}
 	
-	protected function add() {
+	protected function admin__add() {
 		$profile = new Model_Profile();
 		if ($this->recieved_form_data) {
 			if ($profile->save($this->form_data)) {
@@ -31,7 +31,7 @@ class Controller_Profiles extends Controller_Base {
 //		$this->payload->users = $profile->User(array('user_id'=>array('username','age')));
 		$this->payload->users = $profile->User(array('user_id'=>'username'));	
 	}
-	protected function edit() {
+	protected function admin__edit() {
 		if ($this->recieved_form_data) {
 			$profile = new Model_Profile();
 			if ($profile->save($this->form_data)) {
@@ -46,7 +46,7 @@ class Controller_Profiles extends Controller_Base {
 		$profile->set('profile_id',$this->next_request_segment_value());
 		$this->payload->profile = $profile->findOne();
 	}
-	protected function delete() {
+	protected function admin__delete() {
 		$profile = new Model_Profile();
 		$profile->set('profile_id',$this->next_request_segment_value());
 		if ($profile->delete()) {
@@ -57,7 +57,7 @@ class Controller_Profiles extends Controller_Base {
 		}
 		$this->payload->profiles = $profile->find();
 	}
-	protected function over20() {
+	protected function admin__over20() {
 		$profile = new Model_Profile();
 		// could also be: $profile->set('active','=',true);
 		$profile->set('active',true);

@@ -7,5 +7,6 @@ $form->text('password');
 $form->text('xmpp_jid');
 $form->text('sms_number');
 $form->text('age');
+$form->select('group');
 $form->close('Add');
 ?>

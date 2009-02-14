@@ -42,6 +42,14 @@ class View_Form {
 			.$value
 			." ></p>\n";
 	}
+    /**
+     *
+     * @param <type> $select_name ex: 'User.group' OR 'group' (User implied in that case)
+     * @param <type> $selected
+     * @param <type> $items
+     * @param <type> $top_option_label
+     * @param <type> $attibutes_string
+     */
 	public function select($select_name, $selected=null, $items=array(), $top_option_label=null, $attibutes_string=null) {
 		$names = $this->model_field_names($select_name);
 		$name = "{$names['model']}[{$names['field']}]";
@@ -52,9 +60,17 @@ class View_Form {
 		}
 		// look for the default named array in the payload
 		if ( ! $items) {
-			$items = $this->controller->payload->{controller_for_model($select_name)}
-				? $this->controller->payload->{controller_for_model($select_name)}
-				: array();
+            // default to looking for a has many or habtm between $this->model_name
+            // and $names['field']
+            $model = Util_Naming::modelize($this->model_name);
+            $model = new $model;
+            $items = $model->lookup_list($names['field']);
+            
+
+
+//			$items = $this->controller->payload->{controller_for_model($select_name)}
+//				? $this->controller->payload->{controller_for_model($select_name)}
+//				: array();
 		}
 		$output = '<p><label for="'.$names['model'].'-'.$names['field'].'">'.$this->labelize_name($names['field'])."</label>\n";
 		$output .= "\n<select name=\"".$name.'" id="'.$id.'" ';

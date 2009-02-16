@@ -58,7 +58,7 @@ class View_Form {
         $attibutes_string = array_get_else($options, 'attributes');
         
 		$names = $this->model_field_names($select_name);
-		$name = "{$names['model']}[{$names['field']}]";
+		$name = "{$names['model']}[{$names['field']}][id]";
 		$id = "{$names['model']}-{$names['field']}";
 		// sniff out the id for an edit form if user does not explicitly supply it
 		if ($selected===null && $this->form_action=='edit') {
@@ -71,14 +71,9 @@ class View_Form {
             $model = Util_Naming::modelize($this->model_name);
             $model = new $model;
             $items = $model->lookup_list($names['field']);
-            
 
-
-//			$items = $this->controller->payload->{controller_for_model($select_name)}
-//				? $this->controller->payload->{controller_for_model($select_name)}
-//				: array();
 		}
-		$output = '<p><label for="'.$names['model'].'-'.$names['field'].'">'.$this->labelize_name($names['field'])."</label>\n";
+		$output = '<p><label for="'.$names['model'].'-'.$names['field'].'-id">'.$this->labelize_name($names['field'])."</label>\n";
 		$output .= "\n<select name=\"".$name.'" id="'.$id.'" ';
 		$output .= ($attibutes_string) ? $attibutes_string." >\n" : " >\n";
 		$output .= $top_option_label ? "\t<option value=\"\">$top_option_label</option>\n" : '';

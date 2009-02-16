@@ -16,7 +16,11 @@ abstract class Model_Base {
 		'modified' => null,
 		'active' => null
 	);
-	protected $relations = array ();
+	protected $relations = array();
+    /*
+     * ex: array( 'group' => array('id' => '1'))
+     */
+    protected $submitted_habtm_data;
 	/**
 	 * defined in the implementing class thusly
 	 * 	protected $attribute_definitions = array(
@@ -141,11 +145,40 @@ abstract class Model_Base {
 			} catch (Exception $e) {
 				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
 			}
+            $this->save_habtm_relations();
 		} else {
 			ENV::$log->error(__METHOD__. ' Valid model id not supplied as param and not currently set on $this');
 		}
 		return $rows_affected;
 	}
+    protected function save_habtm_relations() {
+        if($this->submitted_habtm_data) {
+            foreach ($this->submitted_habtm_data as $model => $data) {
+                $save_statement = $this->build_habtm_join_insert_statement($model);
+                ENV::$log->debug(__METHOD__.' built save QUERY: '.$save_statement);
+                try {
+                    if( ! $statement = $this->db_handle->prepare($save_statement)) {
+                        ENV::$log->error(__METHOD__.' - $statement::prepare failed for query: '
+                            .$save_statement."\n".print_r($this->db_handle->errorInfo(),1));
+                    }
+                    foreach ($data as $field_name => $field_value) {
+                        $statement->bindValue(':'.$model.'_'.$field_name, $field_value);
+                        $statement->bindValue(':'.$this->model_name.'_'.$field_name, $this->id);
+                    }
+//                    if ( ! $this->is_new_model()) {
+//                        $statement->bindValue(':'.$this->model_id_name, $this->id);
+//                    }
+                    $rows_affected = $statement->execute();
+                    if ($rows_affected===false) {
+                        ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
+                            .$save_statement."\n".print_r($statement->errorInfo(),1));
+                    }
+                } catch (Exception $e) {
+                    ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+                }
+            }
+        }
+    }
 	public function delete() {
 		if ($this->id !== null) {
 			$result = null;
@@ -278,6 +311,15 @@ abstract class Model_Base {
 			.' VALUES ( :'.implode(',:',array_keys($this->field_values)).', now(), now() )';
 		return $insert_statement;
 	}
+    private function build_habtm_join_insert_statement($related_model) {
+        $table_name = array($this->model_name, $related_model);
+        sort($table_name);
+        $table_name = ' `'.implode('_', $table_name).'` ';
+		$insert_statement =
+			'INSERT INTO '.$table_name."( `{$this->model_name}_id`, `{$related_model}_id` )"
+			." VALUES ( :{$this->model_name}_id, :{$related_model}_id )";
+		return $insert_statement;
+	}
 	private function build_update_statement() {
 		$update_statement = 'UPDATE `'.$this->model_name.'` SET modified = now(), ';
 		$comma = '';
@@ -307,6 +349,8 @@ abstract class Model_Base {
 			if (isset($submitted_data[$this->model_id_name])) {
 				$this->id = $submitted_data[$this->model_id_name];
 			}
+            // look for habtm relations
+            $this->submitted_habtm_data = array_intersect_key($submitted_data,array_get_else($this->relations, 'has_and_belongs_to_many',array()));
 			$submitted_data = array_intersect_key($submitted_data, $this->attribute_definitions);
 			$this->field_values = array_merge($this->field_values, $submitted_data);
 		}
@@ -332,5 +376,6 @@ abstract class Model_Base {
 	protected function execute($sql) {
 		return $this->db_handle->execute($sql);
 	}
+
 	
 }

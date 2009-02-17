@@ -151,31 +151,50 @@ abstract class Model_Base {
 		}
 		return $rows_affected;
 	}
+    /**
+     * First do select and then insert the array subtraction
+     * of the id's in submitted data and the return rows from select
+     */
     protected function save_habtm_relations() {
+
         if($this->submitted_habtm_data) {
+
             foreach ($this->submitted_habtm_data as $model => $data) {
-                $save_statement = $this->build_habtm_join_insert_statement($model);
-                ENV::$log->debug(__METHOD__.' built save QUERY: '.$save_statement);
-                try {
-                    if( ! $statement = $this->db_handle->prepare($save_statement)) {
-                        ENV::$log->error(__METHOD__.' - $statement::prepare failed for query: '
-                            .$save_statement."\n".print_r($this->db_handle->errorInfo(),1));
-                    }
-                    foreach ($data as $field_name => $field_value) {
-                        $statement->bindValue(':'.$model.'_'.$field_name, $field_value);
-                        $statement->bindValue(':'.$this->model_name.'_'.$field_name, $this->id);
-                    }
-//                    if ( ! $this->is_new_model()) {
-//                        $statement->bindValue(':'.$this->model_id_name, $this->id);
-//                    }
-                    $rows_affected = $statement->execute();
-                    if ($rows_affected===false) {
-                        ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
-                            .$save_statement."\n".print_r($statement->errorInfo(),1));
-                    }
-                } catch (Exception $e) {
-                    ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+                $existing_relations = $this->execute_find_statment(
+                    "SELECT `{$model}_id` FROM `{$this->join_table($model)}` "
+                    ."WHERE `{$this->model_id_name}` = :{$this->model_id_name}", 
+                    array($this->model_id_name => $this->id),
+                    array($model.'_id')
+                );
+                ENV::$log->debug(__METHOD__." `{$this->model_name}` has these existing `{$model}` relations ["
+                    .implode(', ',$existing_relations)."]");
+                $new_relations = array();
+                if($existing_relations) {
+                    $new_relations = array_diff($data['id'], $existing_relations);
                 }
+                ENV::$log->debug(__METHOD__." After subtracting Existing relations from submitted relations  ["
+                    .implode(', ',$data['id'])."] these relations will be inserted [".implode(', ',$new_relations)."]");
+                if($new_relations) {
+                    $save_statement = $this->build_habtm_join_insert_statement($model);
+                    try {
+                        if( ! $statement = $this->db_handle->prepare($save_statement)) {
+                            ENV::$log->error(__METHOD__.' - $statement::prepare failed for query: '
+                                .$save_statement."\n".print_r($this->db_handle->errorInfo(),1));
+                        }
+                        $statement->bindValue(':'.$this->model_id_name, $this->id);
+                        foreach ($new_relations as $related_model_id) {
+                            $statement->bindValue(':'.$model.'_id', $related_model_id);
+                            $rows_affected = $statement->execute();
+                            if ($rows_affected===false) {
+                                ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
+                                    .$save_statement."\n".print_r($statement->errorInfo(),1));
+                            }
+                        }
+                    } catch (Exception $e) {
+                        ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+                    }
+                }
+                
             }
         }
     }
@@ -209,32 +228,42 @@ abstract class Model_Base {
      * @param string $table_to_query if given we query that table not
      * the one belonging to this model (for internal use only)
 	 */
-    private function _find(array $field_values = null, $table_to_query = null) {
+    private function _find(array $field_values = null, $table_to_query = null, $attach_habtm = true) {
         $result = null;
 		$this->set_field_values($field_values);
         $table = $table_to_query!==null ? "`$table_to_query`" : "`{$this->model_name}`";
-		// SELECT b, d FROM foo WHERE `b` = :b AND `d` = :d
+        // SELECT b, d FROM foo WHERE `b` = :b AND `d` = :d
 		$find_statement = 
-			'SELECT * FROM '.$table.$this->build_where_clause();
-		ENV::$log->debug(__METHOD__.' built find QUERY: '.$find_statement);
-		try {
-			$statement = $this->db_handle->prepare($find_statement);
-			foreach ($this->field_values as $field_name => $field_value) {
+			"SELECT {$table}.* FROM ".$table.$this->build_where_clause($table_to_query);
+        $bind_params = $this->field_values;
+        if ($this->id !== null) {
+            $bind_params += array($this->model_id_name => $this->id);
+        }
+        $result = $this->execute_find_statment($find_statement, $bind_params);
+        if($attach_habtm) {
+            $result = $this->attach_habtm_data($result);
+        }
+		return $result;
+	}
+
+    private function execute_find_statment($statement_text, $bind_params, $result_structure=null) {
+        $result = null;
+        ENV::$log->debug(__METHOD__.' executing QUERY: '.$statement_text);
+        try {
+			$statement = $this->db_handle->prepare($statement_text);
+			foreach ($bind_params as $field_name => $field_value) {
 				$statement->bindValue(':'.$field_name, $field_value);
-			}
-			if ($this->id !== null) {
-				$statement->bindValue(':'.$this->model_id_name, $this->id);
 			}
 			$statement->execute();
 			$result = $statement->fetchAll(PDO::FETCH_ASSOC);
 		} catch (Exception $e) {
 			ENV::$log->error(__METHOD__.'-'.$e->getMessage());
 		}
-		return $result;
-	}
+        return $result_structure===null ? $result : $this->apply_return_structure($result_structure, $result);
+    }
 
 	public function findOne(array $field_values = null) {
-		$one = $this->find($field_values);
+		$one = $this->_find($field_values);
 		return isset($one[0]) ? $one[0] : null;
 	}
     public function lookup_list($related_model=null) {
@@ -242,7 +271,7 @@ abstract class Model_Base {
         if($related_model===null) {
             $results = $this->_find();
         } else {
-            $results = $this->_find(null,$related_model);
+            $results = $this->_find(null,$related_model,false);
 
         }
         return $this->apply_return_structure(array('id'=>'name'), $results);
@@ -252,6 +281,10 @@ abstract class Model_Base {
 	 * return structure is: array('user_id'=>array('username','age'));
 	 * row of results: array('user_id'=> 2, 'age'=>30, 'username' => 'sam');
 	 * transformed row = array(2=>array(age=>30, username=>sam))
+     *
+     * ex: $result_structure = array('user_id');
+     * row of results: array('user_id'=> 2, 'age'=>30, 'username' => 'sam');
+	 * transformed row = array(0 => '2')
 	 * 
 	 * @param $return_structure
 	 * array({key} => {field1})
@@ -264,7 +297,12 @@ abstract class Model_Base {
 			foreach ($results as $result) {
 				foreach ($return_structure as $structure_key => $field) {
 					if( ! is_array($field)) {
-						$structure_formatted_results[$result[$structure_key]] = $result[$field];
+                        if($structure_key===0) {
+                            $structure_formatted_results[] = $result[$field];
+                        } else {
+                            $structure_formatted_results[$result[$structure_key]] = $result[$field];
+                        }
+						
 					} else {
 						foreach ($field as $value) {
 							$structure_formatted_results[$result[$structure_key]][$value] = $result[$value];
@@ -275,6 +313,7 @@ abstract class Model_Base {
 		}
 		return $structure_formatted_results;
 	}
+    
 	/**
 	 * if $fields_is_return_struct is true, we blend the keys into the values and create the
 	 * select from that
@@ -290,16 +329,17 @@ abstract class Model_Base {
 		}
 		return isset($select_fields[0]) ? 'SELECT '.implode(', ',$select_fields):null;
 	}
-	private function build_where_clause() {
+	private function build_where_clause($table_to_query=null) {
+        $table = $table_to_query===null?$this->model_name:$table_to_query;
 		$where_clause = '';
 		// if $this->id is set, just do
 		if ($this->id !==null) {
-			$where_clause = ' WHERE `'.$this->model_name.'_id` = :'.$this->model_name.'_id ';
+			$where_clause = " WHERE `{$table}`.`{$this->model_id_name}` = :{$this->model_id_name} ";
 		} else if(count($this->field_values)) {
 			$where_clause = ' WHERE ';
 			$and = '';
 			foreach (array_keys($this->field_values) as $field_name) {		
-				$where_clause .= $and.'`'.$field_name.'` '.$this->field_value_comparitors[$field_name].' :'.$field_name;
+				$where_clause .= $and." `{$table}`.`{$field_name}` {$this->field_value_comparitors[$field_name]} :{$field_name}";
 				$and = ' AND ';
 			}
 		}
@@ -312,11 +352,8 @@ abstract class Model_Base {
 		return $insert_statement;
 	}
     private function build_habtm_join_insert_statement($related_model) {
-        $table_name = array($this->model_name, $related_model);
-        sort($table_name);
-        $table_name = ' `'.implode('_', $table_name).'` ';
-		$insert_statement =
-			'INSERT INTO '.$table_name."( `{$this->model_name}_id`, `{$related_model}_id` )"
+        $insert_statement =
+            'INSERT INTO `'.$this->join_table($related_model)."` ( `{$this->model_name}_id`, `{$related_model}_id` )"
 			." VALUES ( :{$this->model_name}_id, :{$related_model}_id )";
 		return $insert_statement;
 	}
@@ -376,6 +413,52 @@ abstract class Model_Base {
 	protected function execute($sql) {
 		return $this->db_handle->execute($sql);
 	}
+    public function is_habtm($related_model) {
+        return isset($this->relations['has_and_belongs_to_many'][$related_model]);
+    }
+    /*
+     * ex:
+     * SELECT `user_id` ,  `group_id`
+     * FROM `group_user`
+     * WHERE `user_id` IN (:user_id0, :user_id1)
+     */
+    private function attach_habtm_data($find_results) {
+        foreach (array_get_else($this->relations,'has_and_belongs_to_many',array()) as $model => $relation_meta) {
+            $id_placeholders = implode(', ',array_fill(0,count($find_results),'?'));
+            $save_statement = "SELECT `{$model}_id`, `{$this->model_id_name}` FROM `{$this->join_table($model)}` "
+                ."WHERE {$this->model_id_name} IN ($id_placeholders) ";
 
-	
+            ENV::$log->debug(__METHOD__.' built save QUERY: '.$save_statement);
+            $statement = null;
+            $results = array();
+			try {
+				if( ! $statement = $this->db_handle->prepare($save_statement)) {
+					ENV::$log->error(__METHOD__.' - $statement::prepare failed for query: '
+						.$save_statement."\n".print_r($this->db_handle->errorInfo(),1));
+				}
+				foreach ($find_results as $index => $find_result) {
+                    $statement->bindParam($index+1, $find_results[$index][$this->model_id_name]);
+                }
+				$statement->execute();
+                $results = $statement->fetchAll(PDO::FETCH_ASSOC);
+			} catch (Exception $e) {
+				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+			}
+            foreach ($find_results as &$find_result) {
+                foreach ($results as $index => $result) {
+                    if($result[$this->model_id_name]==$find_result[$this->model_id_name]) {
+                        $find_result[$model][] = $result[$model.'_id'];
+                        unset($results[$index]);
+                    }
+                }
+                $find_result[$model] = isset ($find_result[$model]) ? $find_result[$model] : array();
+            }
+        }
+        return $find_results;
+    }
+	private function join_table($related_model) {
+        $table_name = array($this->model_name, $related_model);
+        sort($table_name);
+        return implode('_', $table_name);
+    }
 }

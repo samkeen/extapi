@@ -56,9 +56,11 @@ class View_Form {
         $items = array_get_else($options, 'items');
         $top_option_label = array_get_else($options, 'top');
         $attibutes_string = array_get_else($options, 'attributes');
-        
-		$names = $this->model_field_names($select_name);
-		$name = "{$names['model']}[{$names['field']}][id]";
+        $names = $this->model_field_names($select_name);
+		$name = "{$names['model']}[{$names['field']}][id][]";
+
+        $selected = $this->form_action=='edit' ? $this->form_get($names['field']) : array();
+
 		$id = "{$names['model']}-{$names['field']}";
 		// sniff out the id for an edit form if user does not explicitly supply it
 		if ($selected===null && $this->form_action=='edit') {
@@ -73,13 +75,15 @@ class View_Form {
             $items = $model->lookup_list($names['field']);
 
 		}
+        $multi_select = $model->is_habtm($names['field'])?' multiple="true" ':'';
 		$output = '<p><label for="'.$names['model'].'-'.$names['field'].'-id">'.$this->labelize_name($names['field'])."</label>\n";
-		$output .= "\n<select name=\"".$name.'" id="'.$id.'" ';
+		$output .= "\n<select name=\"".$name.'" id="'.$id.'" '.$multi_select;
 		$output .= ($attibutes_string) ? $attibutes_string." >\n" : " >\n";
 		$output .= $top_option_label ? "\t<option value=\"\">$top_option_label</option>\n" : '';
 		$selected = ($selected===null && isset($_REQUEST[$name])) ? $_REQUEST[$name] : $selected;
 		foreach ($items as $value => $label) {
-			$output.= "\t<option value=\"$value\" ".($selected==$value?' selected="true" ':'').'>'.h($label,false)."</opion>\n";
+            $is_selected = $selected && in_array($value, $selected) ? ' selected="true" ' : '';
+			$output.= "\t<option {$is_selected} value=\"$value\" ".($selected==$value?' selected="true" ':'').'>'.h($label,false)."</opion>\n";
 		}
 		$output.="</select>\n";
 		echo $output;

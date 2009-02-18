@@ -41,6 +41,15 @@ class Model_DBHandle {
 	public function prepare($statement_text) {
 		return $this->db_handle->prepare($statement_text);
 	}
+    public function last_insert_id($sequence_id=null) {
+        $last_insert_id = null;
+        try {
+			$last_insert_id = $this->db_handle->lastInsertId($sequence_id);
+		} catch ( Exception $e ) {
+			ENV::$log->error(__METHOD__.$e->getMessage());
+		}
+        return $last_insert_id;
+    }
 	private function connect() {
 		try {
 			$this->db_handle = new PDO('mysql:host='.$this->hostname.';dbname='.$this->database, $this->username, $this->password);

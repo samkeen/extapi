@@ -138,10 +138,12 @@ abstract class Model_Base {
 					$statement->bindValue(':'.$this->model_id_name, $this->id);
 				}
 				$rows_affected = $statement->execute();
-				if ($rows_affected===false) {
+                if ($rows_affected===false) {
 					ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
 						.$save_statement."\n".print_r($statement->errorInfo(),1));
-				}
+				} else if($this->is_new_model()) {
+                    $this->id = $this->db_handle->last_insert_id();
+                }
 			} catch (Exception $e) {
 				ENV::$log->error(__METHOD__.'-'.$e->getMessage());
 			}
@@ -154,6 +156,9 @@ abstract class Model_Base {
     /**
      * First do select and then insert the array subtraction
      * of the id's in submitted data and the return rows from select
+     *
+     * this expects a wholistic set of the related models
+     *
      */
     protected function save_habtm_relations() {
 
@@ -166,15 +171,18 @@ abstract class Model_Base {
                     array($this->model_id_name => $this->id),
                     array($model.'_id')
                 );
-                ENV::$log->debug(__METHOD__." `{$this->model_name}` has these existing `{$model}` relations ["
-                    .implode(', ',$existing_relations)."]");
-                $new_relations = array();
-                if($existing_relations) {
-                    $new_relations = array_diff($data['id'], $existing_relations);
+                $existing_relations = $existing_relations ? $existing_relations : array();
+                $new_ids_to_save = array();
+                $ids_to_remove = array();
+                $new_ids_to_save = array_diff($data['id'], $existing_relations);
+                $ids_to_remove = array_diff($existing_relations, $data['id']);
+                if(ENV::$log->debug()) {
+                    ENV::$log->debug(__METHOD__." `{$this->model_name}` will add these new `{$model}` relations ["
+                        .implode(', ',$new_ids_to_save)."]");
+                    ENV::$log->debug(__METHOD__." `{$this->model_name}` will remove these invalid existing `{$ids_to_remove}` relations ["
+                        .implode(', ',$existing_relations)."]");
                 }
-                ENV::$log->debug(__METHOD__." After subtracting Existing relations from submitted relations  ["
-                    .implode(', ',$data['id'])."] these relations will be inserted [".implode(', ',$new_relations)."]");
-                if($new_relations) {
+                if($new_ids_to_save) {
                     $save_statement = $this->build_habtm_join_insert_statement($model);
                     try {
                         if( ! $statement = $this->db_handle->prepare($save_statement)) {
@@ -182,12 +190,32 @@ abstract class Model_Base {
                                 .$save_statement."\n".print_r($this->db_handle->errorInfo(),1));
                         }
                         $statement->bindValue(':'.$this->model_id_name, $this->id);
-                        foreach ($new_relations as $related_model_id) {
+                        foreach ($new_ids_to_save as $related_model_id) {
                             $statement->bindValue(':'.$model.'_id', $related_model_id);
                             $rows_affected = $statement->execute();
                             if ($rows_affected===false) {
                                 ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
                                     .$save_statement."\n".print_r($statement->errorInfo(),1));
+                            }
+                        }
+                    } catch (Exception $e) {
+                        ENV::$log->error(__METHOD__.'-'.$e->getMessage());
+                    }
+                }
+                if($ids_to_remove) {
+                    $delete_statement = $this->build_delete_statement($this->join_table($model),array($this->model_id_name,$model.'_id'));
+                    try {
+                        if( ! $statement = $this->db_handle->prepare($delete_statement)) {
+                            ENV::$log->error(__METHOD__.' - $statement::prepare failed for query: '
+                                .$delete_statement."\n".print_r($this->db_handle->errorInfo(),1));
+                        }
+                        $statement->bindValue(':'.$this->model_id_name, $this->id);
+                        foreach ($ids_to_remove as $related_model_id) {
+                            $statement->bindValue(':'.$model.'_id', $related_model_id);
+                            $rows_affected = $statement->execute();
+                            if ($rows_affected===false) {
+                                ENV::$log->error(__METHOD__.' - $statement->execute() failed for query: '
+                                    .$delete_statement."\n".print_r($statement->errorInfo(),1));
                             }
                         }
                     } catch (Exception $e) {
@@ -201,7 +229,7 @@ abstract class Model_Base {
 	public function delete() {
 		if ($this->id !== null) {
 			$result = null;
-			$delete_sql = 'DELETE FROM `'.$this->model_name.'` WHERE `'.$this->model_id_name.'` = :'.$this->model_id_name;
+            $delete_sql = $this->build_delete_statement($this->model_name, $this->model_id_name);
 			try {
 				$statement = $this->db_handle->prepare($delete_sql);
 				$statement->bindValue(':'.$this->model_id_name, $this->id);
@@ -357,6 +385,16 @@ abstract class Model_Base {
 			." VALUES ( :{$this->model_name}_id, :{$related_model}_id )";
 		return $insert_statement;
 	}
+    private function build_delete_statement($table, $fieldnames_for_condition) {
+        $fieldnames_for_condition = is_array($fieldnames_for_condition)?$fieldnames_for_condition:array($fieldnames_for_condition);
+        $statement = "DELETE FROM `$table` WHERE ";
+        $and = '';
+        foreach ($fieldnames_for_condition as $fieldname) {
+            $statement .= " $and `{$fieldname}`= :{$fieldname} ";
+            $and = 'AND';
+        }
+        return $statement;
+    }
 	private function build_update_statement() {
 		$update_statement = 'UPDATE `'.$this->model_name.'` SET modified = now(), ';
 		$comma = '';
@@ -428,7 +466,7 @@ abstract class Model_Base {
             $save_statement = "SELECT `{$model}_id`, `{$this->model_id_name}` FROM `{$this->join_table($model)}` "
                 ."WHERE {$this->model_id_name} IN ($id_placeholders) ";
 
-            ENV::$log->debug(__METHOD__.' built save QUERY: '.$save_statement);
+            ENV::$log->debug(__METHOD__.' QUERY to attach HABTM: '.$save_statement);
             $statement = null;
             $results = array();
 			try {
